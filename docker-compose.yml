@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    command: python main.py
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app
+
+  frontend:
+    build: .
+    command: python src/frontend/main.py
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app
