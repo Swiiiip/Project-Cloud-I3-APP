@@ -53,3 +53,7 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 /docs/*
+
+# Blurmoji
+/.game_state/
+/.env/
