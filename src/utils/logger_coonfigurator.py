@@ -8,8 +8,7 @@ logger = getLogger(__name__)
 class LoggerConfigurator:
     @classmethod
     def config_logger(cls):
-        logger.setLevel(INFO)
-        handler = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
+        logging.basicConfig(level=INFO,
+                            encoding="utf-8",
+                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                            handlers=[logging.StreamHandler(sys.stdout)],)

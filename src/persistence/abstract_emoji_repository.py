@@ -1,8 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
-
-from src.core.dto.emoji_combination import EmojiCombination
-from src.core.dto.emoji_data import EmojiData
+from typing import Optional, Dict, Any
 
 
 class AbstractEmojiRepository(ABC):
@@ -15,20 +12,17 @@ class AbstractEmojiRepository(ABC):
         pass
 
     @abstractmethod
-    def fetch_supported_emojis(self) -> Tuple[EmojiData]:
+    def get_all_raw_emojis(self) -> Dict[str, Any]:
         pass
 
     @abstractmethod
-    def fetch_emoji_combinations(self,
-                                 reference_emoji: EmojiData) -> Tuple[EmojiCombination]:
+    def get_raw_emoji(self, codepoint: str) -> Optional[Dict[str, Any]]:
         pass
 
     @abstractmethod
-    def add_emoji_combination(self,
-                              emoji_combination: EmojiCombination):
+    def save_raw_emoji(self, codepoint: str, data: Dict[str, Any]):
         pass
 
     @abstractmethod
-    def add_supported_emoji(self,
-                            emoji_data: EmojiData):
+    def update_combination_entry(self, source_codepoint: str, target_codepoint: str, data: Dict[str, Any]):
         pass

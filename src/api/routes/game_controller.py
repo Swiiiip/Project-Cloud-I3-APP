@@ -2,7 +2,7 @@ from typing import Union
 
 from src.persistence.file_emoji_repository import FileEmojiRepository
 from src.api.routes.missing_game_payload import MissingGamePayload
-from src.core.service.emoji_kitchen_service import EmojiKitchenService
+from src.core.service.emoji_kitchen.emoji_service import EmojiKitchenService
 from src.core.gameplay.mode.daily_challenge_mode import DailyChallengeMode
 from src.core.gameplay.mode.daily_challenge_results.daily_challenge_end_result import DailyChallengeEndResult
 from src.core.gameplay.mode.daily_challenge_results.daily_challenge_guess_result import DailyChallengeGuessResult
@@ -20,18 +20,18 @@ from src.utils.path_handler import PathHandler
 
 class GameController:
     def __init__(self):
-        self.emoji_service = EmojiKitchenService(db=FileEmojiRepository(cache_path=PathHandler.cache_dir()))
+        self._emoji_service = EmojiKitchenService(db=FileEmojiRepository(cache_path=PathHandler.cache_file()))
         self.games: dict[str, Union[DailyChallengeMode, EndlessMode]] = {}
 
     def create_daily_challenge(self, game_id: str) -> DailyChallengeStartResult:
         game_state = DailyChallengeState(game_id)
-        game_mode = DailyChallengeMode(game_state, self.emoji_service.supported_emoji_codes)
+        game_mode = DailyChallengeMode(game_state, self._emoji_service.get_supported_emojis())
         self.games[game_id] = game_mode
         return game_mode.start_game()
 
     def create_endless_game(self, game_id: str) -> EndlessModeStartResult:
         game_state = EndlessModeState(game_id)
-        game_mode = EndlessMode(game_state, self.emoji_service.supported_emoji_codes)
+        game_mode = EndlessMode(game_state, self._emoji_service.get_supported_emojis())
         self.games[game_id] = game_mode
         return game_mode.start_game()
 

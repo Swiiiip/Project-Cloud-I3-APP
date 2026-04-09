@@ -9,5 +9,9 @@ class PathHandler:
         return cls.src_dir.parent / ".env"
 
     @classmethod
-    def cache_dir(cls) -> Path:
+    def cache_file(cls) -> Path:
         return cls.src_dir.parent / ".game_state"
+
+    @classmethod
+    def root_dir(cls) -> Path:
+        return cls.src_dir.parent
