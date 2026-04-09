@@ -1,26 +1,27 @@
 from nicegui import ui
+
 from src.frontend.game_client import GameClient
 
 
 class BlurmojiView:
     def __init__(self, api_client: GameClient):
-        self.api = api_client
+        self.client = api_client
         self.game_id = "daily_user_1"
         self.state = {}
         self.emoji_pool = []
 
     def load_initial_data(self):
-        self.api.create_daily_challenge(self.game_id)
-        self.emoji_pool = self.api.get_supported_emojis()[:60]
-        self.update_local_state()
-
-    def update_local_state(self):
-        self.state = self.api.get_status(self.game_id)
-        self.render.refresh()
+        self.client.create_daily_challenge(self.game_id)
+        self.emoji_pool = self.client.get_supported_emojis()
+        self._update_local_state()
 
     def handle_guess(self, emoji: str):
-        self.api.make_guess(self.game_id, emoji)
-        self.update_local_state()
+        self.client.make_guess(self.game_id, emoji)
+        self._update_local_state()
+
+    def _update_local_state(self):
+        self.state = self.client.get_status(self.game_id)
+        self.render.refresh()
 
     @ui.refreshable
     def render(self):
@@ -34,7 +35,7 @@ class BlurmojiView:
         with ui.column().classes('w-full items-center gap-6'):
             # Image Container
             with ui.element('div').classes('p-6 bg-[#1e1e1e] rounded-2xl shadow-lg'):
-                ui.image(self.state.get("target_image_url")).style(
+                ui.image(self.client.get_image() self.state.get("target_image_url")).style(
                     f'filter: blur({blur}px); width: 240px; transition: all 0.6s ease;'
                 )
 

@@ -7,10 +7,6 @@ class GameRoutes:
     def __init__(self):
         self.controller = GameController()
 
-    def get_supported_emojis(self):
-        emojis_codes = self.controller.get_supported_emojis()
-        return emojis_codes.to_json_dict()
-
     def create_daily_challenge(self):
         game_id = request.json.get("game_id", "default")
         result = self.controller.create_daily_challenge(game_id)

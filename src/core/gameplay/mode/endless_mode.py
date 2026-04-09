@@ -1,24 +1,20 @@
 import random
-from typing import List
+from typing import Tuple
 
+from core.dto.emoji_data import EmojiData
 from src.core.gameplay.mode.endless_mode_results.endless_mode_end_result import EndlessModeEndResult
 from src.core.gameplay.mode.endless_mode_results.endless_mode_guess_correct import EndlessModeGuessCorrect
 from src.core.gameplay.mode.endless_mode_results.endless_mode_guess_result import EndlessModeGuessResult
 from src.core.gameplay.mode.endless_mode_results.endless_mode_guess_wrong import EndlessModeGuessWrong
 from src.core.gameplay.mode.endless_mode_results.endless_mode_start_result import EndlessModeStartResult
 from src.core.gameplay.mode.endless_mode_results.endless_mode_status_result import EndlessModeStatusResult
-from src.core.gameplay.mode.abstract_endless_mode import AbstractEndlessMode
-from src.core.service.emoji_kitchen_service import EmojiKitchenService
 from src.core.gameplay.state.endless_mode_state import EndlessModeState
 
 
-class EndlessMode(AbstractEndlessMode):
-    def __init__(self, game_state: EndlessModeState, emoji_service: EmojiKitchenService):
-        super().__init__(game_state)
-        self.emoji_service = emoji_service
-        self.available_emojis: List[str] = [
-            "🎯", "☕", "👻", "🔥", "💎", "🌟", "🎨", "🎪", "🎭", "🌈"
-        ]
+class EndlessMode:
+    def __init__(self, game_state: EndlessModeState, supported_emojis: Tuple[EmojiData]):
+        self.game_state = game_state
+        self.available_emojis = supported_emojis
 
     def start_game(self) -> EndlessModeStartResult:
         self._set_new_emoji()

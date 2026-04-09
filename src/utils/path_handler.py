@@ -7,3 +7,7 @@ class PathHandler:
     @classmethod
     def dot_env(cls) -> Path:
         return cls.src_dir.parent / ".env"
+
+    @classmethod
+    def cache_dir(cls) -> Path:
+        return cls.src_dir.parent / ".game_state"

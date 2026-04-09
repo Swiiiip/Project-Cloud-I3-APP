@@ -17,7 +17,6 @@ class GameApi:
         self._setup_routes()
 
     def _setup_routes(self):
-        self.web_server.add_route("/api/supported-emojis", self.routes.get_supported_emojis, "GET")
         self.web_server.add_route("/api/daily-challenge", self.routes.create_daily_challenge, "POST")
         self.web_server.add_route("/api/endless", self.routes.create_endless_game, "POST")
         self.web_server.add_route("/api/guess", self.routes.make_guess, "POST")
