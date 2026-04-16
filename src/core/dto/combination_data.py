@@ -1,15 +1,14 @@
 from dataclasses import dataclass
 from typing import Dict, Any
 
-from src.core.dto.emoji_data import EmojiData
+from src.core.dto.emoji_couple import EmojiCouple
 
 
 @dataclass(frozen=True)
 class CombinationData:
     name: str
     result_image_url: str
-    first_emoji: EmojiData
-    second_emoji: EmojiData
+    emoji_couple: EmojiCouple
 
     def to_dict(self) -> Dict[str, Any]:
         return {

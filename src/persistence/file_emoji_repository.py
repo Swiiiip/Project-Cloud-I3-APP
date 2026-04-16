@@ -46,35 +46,3 @@ class FileEmojiRepository(AbstractEmojiRepository):
         self._storage_path.parent.mkdir(parents=True, exist_ok=True)
         with self._storage_path.open("w", encoding="utf-8") as f:
             json.dump(self._cache, f, indent=2, ensure_ascii=False)
-
-
-if __name__ == '__main__':
-    repo = FileEmojiRepository(Path("test_cache.json"))
-    reference_emoji = EmojiData(
-        name="coffee",
-        character="☕",
-        codepoint="2615",
-        keyboard_position=1,
-        keywords=["coffee", "hot beverage"],
-        category="Food & Drink",
-        subcategory="hot beverage"
-    )
-    combo_emoji = EmojiData(
-        name="red_heart",
-        character="❤️",
-        codepoint="2665-fe0f",
-        keyboard_position=1,
-        keywords=["heart", "love"],
-        category="Symbols",
-        subcategory="heart"
-    )
-
-    combination_data = CombinationData(
-        first_emoji=reference_emoji,
-        second_emoji=combo_emoji,
-        result_image_url="www.example.com",
-        name="coffee-heart")
-
-    with repo as r:
-        r.add_supported_emoji(reference_emoji)
-        r.add_emoji_combination(combination_data)

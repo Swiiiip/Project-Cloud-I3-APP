@@ -1,7 +1,7 @@
 # 🤫 Blurmoji
 
 ## Concept
-On each play, the player must guess the random emoji hidden behind the pixelated-blurry image.<br>
+On each round, the player must guess the random emoji hidden behind the pixelated-blurry image.<br>
 He has at his disposal the entire emoji set to guess the hidden emoji.<br>
 Every time he guesses wrong, the reference image increases in resolution, in order to make it less blurry and make it easier on the player.
 
@@ -11,7 +11,7 @@ Every time he guesses wrong, the reference image increases in resolution, in ord
   - challenge once a day only
 - v2 : Endless mode
   - try to get the highest streak (=consecutive wins)
-  - 1 guess max per play
+  - 1 guess max per round
 - v2 : Time crunch
   - try to get the highest streak (=consecutive wins)
   - unlimited guesses, can skip

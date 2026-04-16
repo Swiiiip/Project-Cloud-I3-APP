@@ -1,5 +1,6 @@
 from nicegui import ui
 
+from src.config import Config
 from src.frontend.game_client import GameClient
 
 
@@ -41,7 +42,7 @@ class BlurmojiView:
 
             # Guess Slots
             with ui.row().classes('gap-3'):
-                for i in range(5):
+                for i in range(Config.DAILY_CHALLENGE_MAX_GUESSES):
                     char = guesses[i] if i < len(guesses) else ""
                     border = "border-[#333]"
                     if is_over and i == len(guesses) - 1:

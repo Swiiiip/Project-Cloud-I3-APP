@@ -11,4 +11,4 @@ class LoggerConfigurator:
         logging.basicConfig(level=INFO,
                             encoding="utf-8",
                             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                            handlers=[logging.StreamHandler(sys.stdout)],)
+                            handlers=[logging.StreamHandler(sys.stdout)])
