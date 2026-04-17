@@ -1,7 +1,7 @@
 import random
 from typing import Tuple
 
-from src.core.dto.emoji_data import EmojiData
+from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.gameplay.mode.endless_mode_results.endless_mode_end_result import EndlessModeEndResult
 from src.core.gameplay.mode.endless_mode_results.endless_mode_guess_correct import EndlessModeGuessCorrect
 from src.core.gameplay.mode.endless_mode_results.endless_mode_guess_result import EndlessModeGuessResult

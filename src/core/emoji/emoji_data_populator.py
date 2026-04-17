@@ -5,16 +5,16 @@ from typing import Dict, Any, Tuple
 import requests
 
 from src.config import Config
-from src.core.dto.combination_data import CombinationData
-from src.core.dto.emoji_couple import EmojiCouple
-from src.core.dto.emoji_data import EmojiData
-from src.core.dto.unit_data import UnitData
+from src.core.emoji.dto.combination_data import CombinationData
+from src.core.emoji.dto.emoji_couple import EmojiCouple
+from src.core.emoji.dto.emoji_data import EmojiData
+from src.core.emoji.dto.unit_data import UnitData
 from src.persistence.abstract_emoji_repository import AbstractEmojiRepository
 
 logger = logging.getLogger(__name__)
 
 
-class EmojiDataPopulationService:
+class EmojiDataPopulator:
     def __init__(self, repository: AbstractEmojiRepository):
         self._repository = repository
 
@@ -54,13 +54,13 @@ class EmojiDataPopulationService:
     @staticmethod
     def _to_unit_data_collection(raw_data: Dict[str, Any]) -> Tuple[UnitData, ...]:
         units = []
-        emoji_map = EmojiDataPopulationService._create_emoji_map(raw_data)
+        emoji_map = EmojiDataPopulator._create_emoji_map(raw_data)
         for codepoint, details in raw_data.items():
             raw_combinations = details.get("combinations", {})
             ref_emoji = emoji_map[codepoint]
-            combinations = EmojiDataPopulationService._map_combinations(emoji_map=emoji_map,
-                                                                        reference_emoji=ref_emoji,
-                                                                        raw_combinations=raw_combinations)
+            combinations = EmojiDataPopulator._map_combinations(emoji_map=emoji_map,
+                                                                reference_emoji=ref_emoji,
+                                                                raw_combinations=raw_combinations)
             units.append(UnitData(reference_emoji=ref_emoji, combinations=combinations))
         logger.info(f"Mapped raw data to {len(units)} unit data entries")
         return tuple(units)

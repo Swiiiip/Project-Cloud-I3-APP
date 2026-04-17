@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.core.dto.emoji_couple import EmojiCouple
+from src.core.emoji.dto.emoji_couple import EmojiCouple
 
 
 @dataclass(frozen=True)

@@ -4,10 +4,11 @@ from datetime import date
 from typing import Dict
 
 from src.config import Config
-from src.core.dto.combination_data import CombinationData
+from src.core.emoji.dto.combination_data import CombinationData
+from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.gameplay.mode.challenge_answer import ChallengeAnswer
 from src.core.gameplay.mode.challenge_state import ChallengeState
-from src.core.service.emoji.emoji_kitchen import EmojiKitchenService
+from src.core.service.emoji_kitchen import EmojiKitchenService
 
 logger = logging.Logger(__name__)
 
@@ -31,6 +32,9 @@ class DailyChallengeService:
                                                      is_completed=False)
         return self._sessions[user_id]
 
+    def get_supported_emojis(self) -> tuple[EmojiData, ...]:
+        return self._emoji_service.fetch_all_supported_emoji_metadata()
+
     def process_guess(self, user_id: str, first_codepoint_guess: str, second_codepoint_guess: str) -> ChallengeState:
         state = self.get_user_state(user_id)
         if state.is_completed:
@@ -40,11 +44,13 @@ class DailyChallengeService:
                             and
                             second_codepoint_guess == answer_emoji_couple.second_emoji.codepoint)
         if is_correct_guess:
-            state = state.solve()
+            new_state = state.solve()
+            logger.info(f"User '{user_id}' solved the daily challenge in {state.attempts} attempts!")
         else:
-            state = state.increment_attempt()
-        self._sessions[user_id] = state
-        return state
+            new_state = state.increment_attempt()
+            logger.info(f"User '{user_id}' made an incorrect guess. Attempt {new_state.attempts}/{new_state.max_attempts}")
+        self._sessions[user_id] = new_state
+        return new_state
 
     def _pick_daily_combination(self) -> CombinationData:
         emojis = self._emoji_service.fetch_all_supported_emoji_codepoints()
@@ -66,12 +72,12 @@ if __name__ == '__main__':
     from src.utils.logger_coonfigurator import LoggerConfigurator
     from src.utils.path_handler import PathHandler
     from src.persistence.file_emoji_repository import FileEmojiRepository
-    from src.core.service.emoji.emoji_data_population import EmojiDataPopulationService
+    from src.core.emoji.emoji_data_populator import EmojiDataPopulator
 
     LoggerConfigurator.config_logger()
     emoji_repository = FileEmojiRepository(PathHandler.src_dir / "emojis.json")
     with emoji_repository as repo:
-        populator = EmojiDataPopulationService(repo)
+        populator = EmojiDataPopulator(repo)
         populator.populate_repository()
         emoji_service = EmojiKitchenService(repo)
         game_service = DailyChallengeService(emoji_service)

@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from typing import Tuple, Dict, Any
 
-from src.core.dto.combination_data import CombinationData
-from src.core.dto.emoji_data import EmojiData
+from src.core.emoji.dto.combination_data import CombinationData
+from src.core.emoji.dto.emoji_data import EmojiData
 
 
 @dataclass(frozen=True)

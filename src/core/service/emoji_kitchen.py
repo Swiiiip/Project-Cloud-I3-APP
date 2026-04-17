@@ -1,11 +1,12 @@
 import logging
 from typing import Tuple, Optional
 
-from src.core.dto.combination_data import CombinationData
-from src.core.dto.emoji_couple import EmojiCouple
-from src.core.dto.emoji_data import EmojiData
+from src.core.emoji.dto.combination_data import CombinationData
+from src.core.emoji.dto.emoji_couple import EmojiCouple
+from src.core.emoji.dto.emoji_data import EmojiData
 from src.persistence.abstract_emoji_repository import AbstractEmojiRepository
 from src.persistence.file_emoji_repository import FileEmojiRepository
+from src.core.emoji.emoji_data_populator import EmojiDataPopulator
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 class EmojiKitchenService:
     def __init__(self, repository: AbstractEmojiRepository):
         self._repository = repository
+        self._populate_repository()
 
     def fetch_combination(self,
                           first_emoji_codepoint: str,
@@ -69,23 +71,8 @@ class EmojiKitchenService:
                 return {}
             return first_raw_emoji.get("combinations", {})
 
-
-if __name__ == "__main__":
-    from src.core.service.emoji.emoji_data_population import EmojiDataPopulationService
-    from src.utils.logger_coonfigurator import LoggerConfigurator
-    from src.utils.path_handler import PathHandler
-
-    LoggerConfigurator.config_logger()
-    emoji_repository = FileEmojiRepository(storage_path=PathHandler.root_dir() / "test_cache.json")
-
-    with emoji_repository:
-        service = EmojiKitchenService(emoji_repository)
-        populator = EmojiDataPopulationService(repository=emoji_repository)
-        # populator.populate_repository()
-        combo = service.fetch_combination("1f36a", "1f36a")
-
-        if combo:
-            print(f"Match found: {combo.name}")
-            print(f"Image: {combo.result_image_url}")
-            print(f"Left Side: {combo.emoji_couple.first_emoji.character}")
-            print(f"Right Side: {combo.emoji_couple.second_emoji.character}")
+    def _populate_repository(self):
+        with self._repository as repo:
+            logger.info("Populating emoji repository with data from source")
+            populator = EmojiDataPopulator(repository=repo)
+            populator.populate_repository()

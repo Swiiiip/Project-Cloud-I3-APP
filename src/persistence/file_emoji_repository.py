@@ -3,8 +3,6 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-from src.core.dto.combination_data import CombinationData
-from src.core.dto.emoji_data import EmojiData
 from src.persistence.abstract_emoji_repository import AbstractEmojiRepository
 
 logger = logging.getLogger(__name__)
