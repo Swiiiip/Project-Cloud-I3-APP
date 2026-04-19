@@ -1,12 +1,11 @@
 import logging
-from typing import Tuple, Optional
+from typing import Tuple
 
 from src.core.emoji.dto.combination_data import CombinationData
-from src.core.emoji.dto.emoji_couple import EmojiCouple
+from src.core.emoji.dto.emoji_couple import EmojiDataCouple
 from src.core.emoji.dto.emoji_data import EmojiData
-from src.persistence.abstract_emoji_repository import AbstractEmojiRepository
-from src.persistence.file_emoji_repository import FileEmojiRepository
 from src.core.emoji.emoji_data_populator import EmojiDataPopulator
+from src.persistence.abstract_emoji_repository import AbstractEmojiRepository
 
 logger = logging.getLogger(__name__)
 
@@ -16,15 +15,12 @@ class EmojiKitchenService:
         self._repository = repository
         self._populate_repository()
 
-    def fetch_combination(self,
-                          first_emoji_codepoint: str,
-                          second_emoji_codepoint: str) -> Optional[CombinationData]:
+    def fetch_combination_data(self,
+                               first_emoji_codepoint: str,
+                               second_emoji_codepoint: str) -> CombinationData:
         logger.info("Fetching combination for codepoints: %s and %s", first_emoji_codepoint, second_emoji_codepoint)
         first_emoji = self.fetch_emoji_by_codepoint(first_emoji_codepoint)
         second_emoji = self.fetch_emoji_by_codepoint(second_emoji_codepoint)
-
-        if not first_emoji or not second_emoji:
-            return None
 
         first_raw_combinations = self._get_available_raw_combinations_for_codepoint(first_emoji_codepoint)
         first_raw_combination = first_raw_combinations.get(second_emoji_codepoint, {})
@@ -38,16 +34,16 @@ class EmojiKitchenService:
                              first_emoji_codepoint, second_emoji_codepoint)
 
         return CombinationData(
-            emoji_couple=EmojiCouple(first_emoji, second_emoji),
+            emoji_couple=EmojiDataCouple(first_emoji, second_emoji),
             result_image_url=raw_combination["resultImageUrl"],
-            name=raw_combination.get("name", "")
+            name=raw_combination["name"]
         )
 
     def fetch_available_codepoints_for_combination(self, reference_codepoint: str) -> Tuple[str]:
         raw_combinations = self._get_available_raw_combinations_for_codepoint(reference_codepoint)
         return tuple(raw_combinations.keys())
 
-    def fetch_emoji_by_codepoint(self, codepoint: str) -> Optional[EmojiData]:
+    def fetch_emoji_by_codepoint(self, codepoint: str) -> EmojiData:
         with self._repository as repo:
             raw_emoji = repo.get_raw_emoji(codepoint)
             if not raw_emoji:

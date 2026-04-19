@@ -13,7 +13,7 @@ def main():
     load_dotenv(dotenv_path=PathHandler.dot_env(), override=False)
 
     server = BlurmojiApiBootstrapper()
-    uvicorn.run(server.app,
+    uvicorn.run(server._app,
                 host=os.environ["API_HOST"],
                 port=int(os.environ["API_PORT"]))
 

@@ -6,7 +6,7 @@ import requests
 
 from src.config import Config
 from src.core.emoji.dto.combination_data import CombinationData
-from src.core.emoji.dto.emoji_couple import EmojiCouple
+from src.core.emoji.dto.emoji_couple import EmojiDataCouple
 from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.emoji.dto.unit_data import UnitData
 from src.persistence.abstract_emoji_repository import AbstractEmojiRepository
@@ -84,8 +84,8 @@ class EmojiDataPopulator:
         for target_codepoint, combination_list in raw_combinations.items():
             if target_codepoint in emoji_map and combination_list:
                 first_combination_info = combination_list[0]
-                couple = EmojiCouple(first_emoji=reference_emoji,
-                                     second_emoji=emoji_map[target_codepoint])
+                couple = EmojiDataCouple(first_emoji=reference_emoji,
+                                         second_emoji=emoji_map[target_codepoint])
                 combinations.append(CombinationData(
                     name=first_combination_info.get("alt"),
                     result_image_url=first_combination_info.get("gStaticUrl"),

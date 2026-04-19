@@ -1,53 +1,74 @@
-from fastapi import APIRouter, Response, Body
+import io
+import uuid
+from typing import Optional
 
-from src.core.gameplay.mode.challenge_state import ChallengeState
-from src.core.service.emoji_kitchen import EmojiKitchenService
+from fastapi import APIRouter, Response, Body, Cookie, Depends, Request
+
+from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple
 from src.core.gameplay.image_blur_processor import ImageBlurProcessingService
 from src.core.service.daily_challenge import DailyChallengeService
+from src.core.service.emoji_kitchen import EmojiKitchenService
+
+
+async def get_or_create_session(
+        request: Request,
+        response: Response,
+        session_id: Optional[str] = Cookie(None)) -> str:
+    if session_id:
+        return session_id
+
+    # If we are here, the client sent no cookie.
+    # Only generate a new one if we are hitting the start endpoint
+    if "/start" in request.url.path:
+        new_id = str(uuid.uuid4())
+        response.set_cookie(key="session_id", value=new_id, path="/")
+        return new_id
+
+    # Otherwise, the client is trying to play without a session
+    from fastapi import HTTPException
+    raise HTTPException(status_code=403, detail="No active session found. Visit /start first.")
 
 
 class DailyChallengeRouter:
-    def __init__(self, game_service: DailyChallengeService, image_service: ImageBlurProcessingService, emoji_service: EmojiKitchenService):
+    def __init__(self, game_service: DailyChallengeService, image_service: ImageBlurProcessingService,
+                 emoji_service: EmojiKitchenService):
         self.router = APIRouter(prefix="/api/v1/daily", tags=["gameplay"])
         self.game_service = game_service
         self.image_service = image_service
-
+        self.emoji_service = emoji_service
         self._register_routes()
 
-    async def start_game(self, user_id: str):
-        state = self.game_service.get_user_state(user_id)
-        return self._format_ui_response(state, user_id)
+    async def start_game(self, session_id: str = Depends(get_or_create_session)):
+        state = self.game_service.get_user_state(session_id)
+        return state.model_dump()
 
     async def get_supported_emojis(self):
         emojis = self.game_service.get_supported_emojis()
         return {"emojis": [emoji.to_dict() for emoji in emojis]}
 
-    async def submit_guess(self, user_id: str, first_codepoint_guess: str = Body(...), second_codepoint_guess: str = Body(...)):
-        state = self.game_service.process_guess(user_id, first_codepoint_guess, second_codepoint_guess)
-        return self._format_ui_response(state, user_id)
+    async def submit_guess(self,
+                           couple_codepoint_guess: EmojiCodepointCouple = Body(...),
+                           session_id: str = Depends(get_or_create_session)):
+        state = self.game_service.process_guess(session_id, couple_codepoint_guess)
+        return state.model_dump()
 
-    async def get_game_status(self, user_id: str):
-        state = self.game_service.get_user_state(user_id)
-        return self._format_ui_response(state, user_id)
+    async def get_game_status(self, session_id: str = Depends(get_or_create_session)):
+        state = self.game_service.get_user_state(session_id)
+        return state.model_dump()
 
-    async def render_image(self, user_id: str):
-        state = self.game_service.get_user_state(user_id)
-        image_data = self.image_service.get_processed_image(state.answer.result_image_url, state.attempts)
-        return Response(content=image_data.getvalue(), media_type="image/png")
+    async def render_image(self, session_id: str = Depends(get_or_create_session)):
+        state = self.game_service.get_user_state(session_id)
+        pil_image = self.image_service.get_processed_image(
+            state.answer.result_image_url,
+            state.attempts
+        )
+        buffer = io.BytesIO()
+        pil_image.save(buffer, format="PNG")
+        return Response(content=buffer.getvalue(), media_type="image/png")
 
     def _register_routes(self):
-        self.router.add_api_route("/start/{user_id}", self.start_game, methods=["GET"])
+        self.router.add_api_route("/start", self.start_game, methods=["GET"])
         self.router.add_api_route("/supported_emojis", self.get_supported_emojis, methods=["GET"])
-        self.router.add_api_route("/get_status/{user_id}", self.get_game_status, methods=["GET"])
-        self.router.add_api_route("/guess/{user_id}", self.submit_guess, methods=["POST"])
-        self.router.add_api_route("/render/{user_id}", self.render_image, methods=["GET"])
-
-    @staticmethod
-    def _format_ui_response(state: ChallengeState, user_id: str):
-        return {
-            "image_url": f"/api/v1/daily/render/{user_id}?t={state.attempts}",
-            "attempts": state.attempts,
-            "max_attempts": state.max_attempts,
-            "is_completed": state.is_completed,
-            "is_won": state.is_completed and state.attempts < state.max_attempts
-        }
+        self.router.add_api_route("/get_status", self.get_game_status, methods=["GET"])
+        self.router.add_api_route("/guess", self.submit_guess, methods=["POST"])
+        self.router.add_api_route("/render", self.render_image, methods=["GET"])
