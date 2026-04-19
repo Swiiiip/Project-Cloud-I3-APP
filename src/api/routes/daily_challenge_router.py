@@ -1,45 +1,27 @@
 import io
-import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Response, Body, Cookie, Depends, Request
+from fastapi import APIRouter, Response, Body, Cookie, Request
 
+from src.api.session.abstract_session_resolver import AbstractSessionResolver
 from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple
 from src.core.gameplay.image_blur_processor import ImageBlurProcessingService
 from src.core.service.daily_challenge import DailyChallengeService
 from src.core.service.emoji_kitchen import EmojiKitchenService
-
-
-async def get_or_create_session(
-        request: Request,
-        response: Response,
-        session_id: Optional[str] = Cookie(None)) -> str:
-    if session_id:
-        return session_id
-
-    # If we are here, the client sent no cookie.
-    # Only generate a new one if we are hitting the start endpoint
-    if "/start" in request.url.path:
-        new_id = str(uuid.uuid4())
-        response.set_cookie(key="session_id", value=new_id, path="/")
-        return new_id
-
-    # Otherwise, the client is trying to play without a session
-    from fastapi import HTTPException
-    raise HTTPException(status_code=403, detail="No active session found. Visit /start first.")
-
-
 class DailyChallengeRouter:
     def __init__(self, game_service: DailyChallengeService, image_service: ImageBlurProcessingService,
-                 emoji_service: EmojiKitchenService):
+                 emoji_service: EmojiKitchenService, session_resolver: AbstractSessionResolver):
         self.router = APIRouter(prefix="/api/v1/daily", tags=["gameplay"])
         self.game_service = game_service
         self.image_service = image_service
         self.emoji_service = emoji_service
+        self._session_resolver = session_resolver
         self._register_routes()
 
-    async def start_game(self, session_id: str = Depends(get_or_create_session)):
-        state = self.game_service.get_user_state(session_id)
+    async def start_game(self, request: Request, response: Response,
+                         session_id: Optional[str] = Cookie(None)):
+        resolved_session_id = await self._session_resolver.resolve(request=request, response=response, session_id=session_id)
+        state = self.game_service.get_user_state(resolved_session_id)
         return state.model_dump()
 
     async def get_supported_emojis(self):
@@ -47,17 +29,24 @@ class DailyChallengeRouter:
         return {"emojis": [emoji.to_dict() for emoji in emojis]}
 
     async def submit_guess(self,
+                           request: Request,
+                           response: Response,
                            couple_codepoint_guess: EmojiCodepointCouple = Body(...),
-                           session_id: str = Depends(get_or_create_session)):
-        state = self.game_service.process_guess(session_id, couple_codepoint_guess)
+                           session_id: Optional[str] = Cookie(None)):
+        resolved_session_id = await self._session_resolver.resolve(request=request, response=response, session_id=session_id)
+        state = self.game_service.process_guess(resolved_session_id, couple_codepoint_guess)
         return state.model_dump()
 
-    async def get_game_status(self, session_id: str = Depends(get_or_create_session)):
-        state = self.game_service.get_user_state(session_id)
+    async def get_game_status(self, request: Request, response: Response,
+                              session_id: Optional[str] = Cookie(None)):
+        resolved_session_id = await self._session_resolver.resolve(request=request, response=response, session_id=session_id)
+        state = self.game_service.get_user_state(resolved_session_id)
         return state.model_dump()
 
-    async def render_image(self, session_id: str = Depends(get_or_create_session)):
-        state = self.game_service.get_user_state(session_id)
+    async def render_image(self, request: Request, response: Response,
+                           session_id: Optional[str] = Cookie(None)):
+        resolved_session_id = await self._session_resolver.resolve(request=request, response=response, session_id=session_id)
+        state = self.game_service.get_user_state(resolved_session_id)
         pil_image = self.image_service.get_processed_image(
             state.answer.result_image_url,
             state.attempts
