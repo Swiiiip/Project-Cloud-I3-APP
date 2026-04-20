@@ -116,6 +116,24 @@ class BlurmojiViewModel:
         self._char_2 = self._default_unselected_char
         self._can_confirm = False
 
+    def remove_last_selection(self) -> bool:
+        if not self._state or self.is_interaction_locked or self._is_submitting_guess:
+            return False
+
+        if self._selection_2 is not None:
+            self._selection_2 = None
+            self._char_2 = self._default_unselected_char
+            self._can_confirm = False
+            return True
+
+        if self._selection_1 is not None:
+            self._selection_1 = None
+            self._char_1 = self._default_unselected_char
+            self._can_confirm = False
+            return True
+
+        return False
+
     def submit_guess(self) -> Optional[ChallengeState]:
         if not self._submit_guess_lock.acquire(blocking=False):
             logger.info("submit_guess ignored: a submission is already being processed")

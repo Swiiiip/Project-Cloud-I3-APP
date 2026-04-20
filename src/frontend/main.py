@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from nicegui import ui
+from nicegui.events import KeyEventArguments
 from src.frontend.game_sections import ChallengeImageSection, EmojiGridSection, GuessHistorySection
 from src.frontend.game_view import BlurmojiView
 from src.frontend.session_state import FrontendSessionState
@@ -31,12 +32,20 @@ class WebHandler:
 
             session_state = self._get_session_state()
             image_section = ChallengeImageSection(session_state.view_model)
-            emoji_grid_section = EmojiGridSection(session_state.view_model)
             guess_history_section = GuessHistorySection(
                 session_state.view_model,
                 on_guess_submitted=image_section.render.refresh
             )
+            emoji_grid_section = EmojiGridSection(session_state.view_model, guess_history_section)
             view = BlurmojiView(session_state.view_model, image_section, guess_history_section, emoji_grid_section)
+
+            def handle_backspace_shortcut(event: KeyEventArguments) -> None:
+                if not event.action.keydown or not event.key.backspace:
+                    return
+                if session_state.view_model.remove_last_selection():
+                    guess_history_section.render.refresh()
+
+            ui.keyboard(on_key=handle_backspace_shortcut, repeating=False)
 
             with ui.header().classes(UIClasses.HEADER):
                 ui.label(UIContent.APP_TITLE).classes(UIClasses.HEADER_TITLE)

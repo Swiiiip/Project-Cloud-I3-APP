@@ -5,13 +5,14 @@ from nicegui import run, ui
 
 from src.core.emoji.dto.emoji_couple import EmojiDataCouple
 from src.core.gameplay.dto.challenge_state import ChallengeState
+from src.frontend.game_sections.abstract_guess_submitter import AbstractGuessSubmitter
 from src.frontend.ui_constants import UIClasses, UIColors, UIContent, UIIcons, UIProps, format_guess_pair
 from src.frontend.view_model import BlurmojiViewModel
 
 logger = logging.getLogger(__name__)
 
 
-class GuessHistorySection:
+class GuessHistorySection(AbstractGuessSubmitter):
     def __init__(self, view_model: BlurmojiViewModel, on_guess_submitted: Callable[[], Awaitable[None]]):
         self._view_model = view_model
         self._on_guess_submitted = on_guess_submitted
@@ -158,6 +159,9 @@ class GuessHistorySection:
         finally:
             self._is_submitting = False
             await self.render.refresh()
+
+    async def submit_guess(self) -> None:
+        await self._submit_guess()
 
     def _reset_selection(self):
         self._view_model.reset_selection()

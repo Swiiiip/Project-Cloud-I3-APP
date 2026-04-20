@@ -18,6 +18,11 @@ class UIContent:
     APP_TITLE = '🤫 BLURMOJI'
     NO_EMOJIS_LABEL = 'No emojis available'
     EMOJI_GRID_ERROR_LABEL = 'Keyboard failed to render'
+    EMOJI_MODE_KEYBOARD_LABEL = '⌨ Categories'
+    EMOJI_MODE_SEARCH_LABEL = '🔍 Search'
+    EMOJI_SEARCH_PLACEHOLDER = 'Search emojis by keyword...'
+    EMOJI_SEARCH_HINT = 'Type to search emoji keywords'
+    EMOJI_SEARCH_NO_RESULTS = 'No matching emojis found'
     UNKNOWN_CATEGORY = 'Unknown'
     DEFAULT_SLOT_CHAR = '?'
     EMPTY_ATTEMPT_LABEL = '• •'
@@ -70,10 +75,14 @@ class UIClasses:
     EMOJI_CARD = f'{PANEL_CARD} p-1 flex flex-col flex-1 min-h-0 overflow-hidden'
     EMOJI_ERROR_CARD = f'{PANEL_CARD} border-red-700 items-center justify-center'
     EMOJI_COLUMN_IN_CARD = 'w-full min-w-0 gap-2 flex flex-col flex-1 min-h-0'
+    EMOJI_MODE_ROW = 'w-full items-center gap-3'
+    EMOJI_MODE_BUTTON = 'text-base px-3 py-1'
+    EMOJI_SEARCH_INPUT = 'w-full'
     CATEGORY_ROW = 'w-full gap-1 overflow-x-auto flex-nowrap items-center'
     EMOJI_SCROLL_AREA = f'w-full flex-1 min-h-0 border border-[{UIColors.GRID_SCROLL_BORDER}] rounded-md p-0 overflow-y-auto overflow-x-hidden'
     EMOJI_BUTTON_ROW = 'w-full max-w-full min-w-0 justify-start items-start content-start gap-1 p-1 flex-wrap'
     EMOJI_BUTTON = 'text-2xl p-1 rounded-lg hover:bg-white/10 w-10 h-10'
+    EMOJI_BUTTON_SUGGESTED = 'ring-2 ring-primary/80 bg-primary/15'
 
     CHALLENGE_IMAGE_CONTAINER = 'w-full flex-1 min-h-0'
     CHALLENGE_IMAGE = 'w-full h-full object-contain rounded-lg'
@@ -93,6 +102,9 @@ class UIProps:
     EMOJI_CATEGORY_ACTIVE_BUTTON = 'color=primary'
     EMOJI_CATEGORY_INACTIVE_BUTTON = 'flat color=grey-7'
     EMOJI_PICKER_BUTTON = 'flat'
+    EMOJI_MODE_BUTTON = 'no-caps'
+    EMOJI_MODE_ACTIVE_BUTTON = 'color=primary'
+    EMOJI_MODE_INACTIVE_BUTTON = 'flat color=grey-7'
 
 
 class UIIcons:

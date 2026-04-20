@@ -8,7 +8,7 @@ class EmojiData:
     name: str
     character: str
     codepoint: str
-    keyboard_position: int  # TODO might be useless...
+    keyboard_position: int
     keywords: list[str]
     category: str
     subcategory: str
