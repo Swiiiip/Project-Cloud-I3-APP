@@ -24,9 +24,8 @@ class UIContent:
     EMPTY_ATTEMPT_LABEL = '• •'
     GUESS_PAIR_SEPARATOR = ' • '
     DAILY_CHALLENGE_TEMPLATE = 'Daily Challenge - {date}'
-    ATTEMPTS_TITLE = 'ATTEMPTS'
-    SUCCESS_MESSAGE = 'Well played!'
-    FAILURE_MESSAGE = 'Better luck next time.'
+    SUCCESS_MESSAGE = 'Well played! 🥳'
+    FAILURE_MESSAGE = 'Better luck next time... 😞'
     CHALLENGE_NAME_TEMPLATE = 'The emoji mashup was a "{name}"'
 
 

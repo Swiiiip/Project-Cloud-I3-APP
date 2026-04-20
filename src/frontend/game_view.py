@@ -29,6 +29,7 @@ class BlurmojiView:
 
     async def on_guess_submitted(self):
         await self._image_section.render.refresh()
+        await self._emoji_grid_section.render.refresh()
 
     def render(self):
         with ui.row().classes(UIClasses.MAIN_LAYOUT):

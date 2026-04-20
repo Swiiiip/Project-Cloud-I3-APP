@@ -1,5 +1,6 @@
 import logging
 import random
+import threading
 from datetime import date
 
 from src.config import Config
@@ -20,6 +21,8 @@ class DailyChallengeService:
     def __init__(self, emoji_service: EmojiKitchenService, storage: AbstractChallengeStorage):
         self._emoji_service = emoji_service
         self._storage = storage
+        self._guess_locks: dict[str, threading.Lock] = {}
+        self._guess_locks_guard = threading.Lock()
 
     def get_user_state(self, user_id: str) -> ChallengeState:
         state = self._storage.get_state(user_id)
@@ -48,28 +51,44 @@ class DailyChallengeService:
 
         return state
 
-
     def process_guess(self, user_id: str, codepoint_couple_guess: EmojiCodepointCouple) -> ChallengeState:
-        state = self.get_user_state(user_id)
+        guess_lock = self._get_guess_lock(user_id)
+        if not guess_lock.acquire(blocking=False):
+            logger.info("Ignoring concurrent guess for user '%s' while another submission is processing", user_id)
+            return self.get_user_state(user_id)
 
-        if state.is_completed:
-            return state
+        try:
+            state = self.get_user_state(user_id)
 
-        is_correct_guess = codepoint_couple_guess == state.answer.emoji_codepoint_couple
-        logger.info(f"User '{user_id}' made a guess with codepoints: {codepoint_couple_guess}. Attempts: {state.attempts}/{state.max_attempts}. Guess correct: {is_correct_guess}")
-        emoji_couple_guess = EmojiDataCouple(first_emoji=self._emoji_service.fetch_emoji_by_codepoint(codepoint_couple_guess.first_emoji_codepoint),
-                                             second_emoji=self._emoji_service.fetch_emoji_by_codepoint(codepoint_couple_guess.second_emoji_codepoint))
-        guess_match = self._build_guess_slot_match(state.answer.emoji_codepoint_couple, codepoint_couple_guess)
-        new_state = ChallengeState(answer=state.answer,
-                                   attempts=state.attempts + 1,
-                                   max_attempts=state.max_attempts,
-                                   is_completed=is_correct_guess,
-                                   past_guesses=tuple([*state.past_guesses,
-                                                       emoji_couple_guess]),
-                                   past_guess_matches=tuple([*state.past_guess_matches,
-                                                            guess_match]))
-        self._storage.save_state(user_id, new_state)
-        return new_state
+            if state.is_completed:
+                logger.info("Ignoring guess for user '%s' because user already won", user_id)
+                return state
+
+            is_correct_guess = codepoint_couple_guess == state.answer.emoji_codepoint_couple
+            logger.info(f"User '{user_id}' made a guess with codepoints: {codepoint_couple_guess}. Attempts: {state.attempts}/{state.max_attempts}. Guess correct: {is_correct_guess}")
+            emoji_couple_guess = EmojiDataCouple(first_emoji=self._emoji_service.fetch_emoji_by_codepoint(codepoint_couple_guess.first_emoji_codepoint),
+                                                 second_emoji=self._emoji_service.fetch_emoji_by_codepoint(codepoint_couple_guess.second_emoji_codepoint))
+            guess_match = self._build_guess_slot_match(state.answer.emoji_codepoint_couple, codepoint_couple_guess)
+            new_state = ChallengeState(answer=state.answer,
+                                       attempts=state.attempts + 1,
+                                       max_attempts=state.max_attempts,
+                                       is_completed=is_correct_guess,
+                                       past_guesses=tuple([*state.past_guesses,
+                                                           emoji_couple_guess]),
+                                       past_guess_matches=tuple([*state.past_guess_matches,
+                                                                guess_match]))
+            self._storage.save_state(user_id, new_state)
+            return new_state
+        finally:
+            guess_lock.release()
+
+    def _get_guess_lock(self, user_id: str) -> threading.Lock:
+        with self._guess_locks_guard:
+            guess_lock = self._guess_locks.get(user_id)
+            if guess_lock is None:
+                guess_lock = threading.Lock()
+                self._guess_locks[user_id] = guess_lock
+            return guess_lock
 
     @staticmethod
     def _build_guess_slot_match(answer: EmojiCodepointCouple, guess: EmojiCodepointCouple) -> GuessSlotMatch:
@@ -140,6 +159,6 @@ if __name__ == '__main__':
         user_id = "test_user"
         state = game_service.get_user_state(user_id)
         print(state)
-        couple_guess = EmojiCodepointCouple("u1f600", "u1f600")
+        couple_guess = EmojiCodepointCouple("1f9c2", "231b")
         guess_state = game_service.process_guess(user_id, couple_guess)
         print(guess_state)

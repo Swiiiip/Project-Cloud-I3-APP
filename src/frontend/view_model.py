@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import threading
 from typing import Optional
 
 from PIL.Image import Image
@@ -28,6 +29,8 @@ class BlurmojiViewModel:
         self._selection_1: Optional[EmojiData] = None
         self._selection_2: Optional[EmojiData] = None
         self._can_confirm = False
+        self._is_submitting_guess = False
+        self._submit_guess_lock = threading.Lock()
 
     @property
     def state(self) -> Optional[ChallengeState]:
@@ -51,7 +54,17 @@ class BlurmojiViewModel:
 
     @property
     def can_submit(self) -> bool:
-        return self._can_confirm
+        return self._can_confirm and not self._is_submitting_guess and not self.is_interaction_locked
+
+    @property
+    def is_submitting_guess(self) -> bool:
+        return self._is_submitting_guess
+
+    @property
+    def is_interaction_locked(self) -> bool:
+        if self._state is None:
+            return False
+        return self._state.is_completed or self._state.attempts >= self._state.max_attempts
 
     def has_initial_data(self) -> bool:
         return self._state is not None and self._rendered_image is not None and len(self._emoji_pool) > 0
@@ -82,7 +95,7 @@ class BlurmojiViewModel:
             self.reset_selection()
 
     def select_emoji(self, emoji: EmojiData) -> None:
-        if not self._state or self._state.is_completed:
+        if not self._state or self.is_interaction_locked or self._is_submitting_guess:
             logger.info("Ignoring emoji selection because challenge is unavailable or completed")
             return
         if self._selection_1 is None:
@@ -104,26 +117,35 @@ class BlurmojiViewModel:
         self._can_confirm = False
 
     def submit_guess(self) -> Optional[ChallengeState]:
-        if not self._state or not (self._selection_1 and self._selection_2):
-            logger.info("submit_guess skipped: has_state=%s has_selection_pair=%s", self._state is not None, self._selection_1 is not None and self._selection_2 is not None)
+        if not self._submit_guess_lock.acquire(blocking=False):
+            logger.info("submit_guess ignored: a submission is already being processed")
             return self._state
 
-        guess = EmojiCodepointCouple(
-            first_emoji_codepoint=self._selection_1.codepoint,
-            second_emoji_codepoint=self._selection_2.codepoint
-        )
-        logger.info(
-            "Submitting guess with codepoints %s and %s",
-            guess.first_emoji_codepoint,
-            guess.second_emoji_codepoint,
-        )
-        self._state = self._client.make_guess(guess)
-        self._rendered_image = self._client.get_rendered_image()
-        logger.info(
-            "Guess result received: attempts=%s max_attempts=%s completed=%s",
-            self._state.attempts,
-            self._state.max_attempts,
-            self._state.is_completed,
-        )
-        self.reset_selection()
-        return self._state
+        self._is_submitting_guess = True
+        try:
+            if not self._state or self.is_interaction_locked or not (self._selection_1 and self._selection_2):
+                logger.info("submit_guess skipped: has_state=%s has_selection_pair=%s", self._state is not None, self._selection_1 is not None and self._selection_2 is not None)
+                return self._state
+
+            guess = EmojiCodepointCouple(
+                first_emoji_codepoint=self._selection_1.codepoint,
+                second_emoji_codepoint=self._selection_2.codepoint
+            )
+            logger.info(
+                "Submitting guess with codepoints %s and %s",
+                guess.first_emoji_codepoint,
+                guess.second_emoji_codepoint,
+            )
+            self._state = self._client.make_guess(guess)
+            self._rendered_image = self._client.get_rendered_image()
+            logger.info(
+                "Guess result received: attempts=%s max_attempts=%s completed=%s",
+                self._state.attempts,
+                self._state.max_attempts,
+                self._state.is_completed,
+            )
+            self.reset_selection()
+            return self._state
+        finally:
+            self._is_submitting_guess = False
+            self._submit_guess_lock.release()

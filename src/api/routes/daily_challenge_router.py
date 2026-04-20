@@ -49,10 +49,13 @@ class DailyChallengeRouter:
                            session_id: Optional[str] = Cookie(None)):
         resolved_session_id = await self._session_resolver.resolve(request=request, response=response, session_id=session_id)
         state = self.game_service.get_user_state(resolved_session_id)
-        pil_image = self.image_service.get_processed_image(
-            state.answer.result_image_url,
-            state.attempts
-        )
+        if state.is_completed:
+            pil_image = self.image_service.get_original_image(state.answer.result_image_url)
+        else:
+            pil_image = self.image_service.get_processed_image(
+                state.answer.result_image_url,
+                state.attempts
+            )
         buffer = io.BytesIO()
         pil_image.save(buffer, format="PNG")
         return Response(content=buffer.getvalue(), media_type="image/png")

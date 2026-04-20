@@ -20,10 +20,12 @@ class EmojiGridSection:
     @ui.refreshable
     def render(self):
         emoji_categories = self._view_model.emoji_pool
+        is_locked = self._view_model.is_interaction_locked
         logger.info(
-            'EmojiGridSection render start: category_count=%d selected_category=%s',
+            'EmojiGridSection render start: category_count=%d selected_category=%s locked=%s',
             len(emoji_categories),
             self._selected_category,
+            is_locked,
         )
 
         if not emoji_categories:
@@ -54,12 +56,12 @@ class EmojiGridSection:
                 with ui.column().classes(UIClasses.EMOJI_COLUMN_IN_CARD):
                     with ui.row().classes(UIClasses.CATEGORY_ROW):
                         for category in emoji_categories:
-                            self._create_category_button(category.category, category.category == self._selected_category)
+                            self._create_category_button(category.category, category.category == self._selected_category, is_locked)
 
                     with ui.scroll_area().classes(UIClasses.EMOJI_SCROLL_AREA):
                         with ui.row().classes(UIClasses.EMOJI_BUTTON_ROW):
                             for emoji in current_emojis:
-                                self._create_emoji_button(emoji)
+                                self._create_emoji_button(emoji, is_locked)
 
             logger.info(
                 'EmojiGridSection render complete: total_emojis=%d rendered_buttons=%d selected_category=%s',
@@ -97,6 +99,8 @@ class EmojiGridSection:
         return selected_category
 
     def _select_category(self, category_name: str) -> None:
+        if self._view_model.is_interaction_locked:
+            return
         selected_category = self._selected_category or UIContent.UNKNOWN_CATEGORY
         if category_name == selected_category:
             return
@@ -104,19 +108,21 @@ class EmojiGridSection:
         self._selected_category = category_name
         self.render.refresh()
 
-    def _create_category_button(self, category_name: str, is_active: bool) -> None:
+    def _create_category_button(self, category_name: str, is_active: bool, is_locked: bool) -> None:
         button = ui.button(category_name, on_click=lambda: self._select_category(category_name)).props(UIProps.EMOJI_CATEGORY_BUTTON)
+        button.enabled = not is_locked
         if is_active:
             button.props(UIProps.EMOJI_CATEGORY_ACTIVE_BUTTON)
         else:
             button.props(UIProps.EMOJI_CATEGORY_INACTIVE_BUTTON)
 
 
-    def _create_emoji_button(self, emoji: EmojiData):
-        ui.button(
+    def _create_emoji_button(self, emoji: EmojiData, is_locked: bool):
+        button = ui.button(
             emoji.character,
             on_click=lambda selected=emoji: self._on_emoji_selected(selected)
         ).props(UIProps.EMOJI_PICKER_BUTTON).classes(UIClasses.EMOJI_BUTTON)
+        button.enabled = not is_locked
 
     def _on_emoji_selected(self, emoji: EmojiData):
         logger.info('Emoji selected: category=%s codepoint=%s name=%s', emoji.category, emoji.codepoint, emoji.name)

@@ -15,6 +15,7 @@ class GuessHistorySection:
     def __init__(self, view_model: BlurmojiViewModel, on_guess_submitted: Callable[[], Awaitable[None]]):
         self._view_model = view_model
         self._on_guess_submitted = on_guess_submitted
+        self._is_submitting = False
 
     @ui.refreshable
     def render(self):
@@ -40,11 +41,11 @@ class GuessHistorySection:
                 with ui.row().classes(UIClasses.SLOT_ROW):
                     submit_button = ui.button(icon=UIIcons.SUBMIT, on_click=self._submit_guess).props(UIProps.ROUND_BUTTON)
                     submit_button.bind_enabled_from(self._view_model, 'can_submit')
-                    submit_button.enabled = submit_button.enabled and not is_game_over
+                    submit_button.enabled = submit_button.enabled and not is_game_over and not self._is_submitting
                     submit_button.bind_background_color_from(
                         self._view_model,
                         'can_submit',
-                        lambda can_submit: UIColors.SUBMIT_ENABLED if can_submit and not is_game_over else UIColors.SUBMIT_DISABLED,
+                        lambda can_submit: UIColors.SUBMIT_ENABLED if can_submit and not is_game_over and not self._is_submitting else UIColors.SUBMIT_DISABLED,
                     )
                     ui.button(icon=UIIcons.RESET, on_click=self._reset_selection).props(UIProps.DELETE_BUTTON)
 
@@ -135,13 +136,28 @@ class GuessHistorySection:
             return target_codepoint
 
     async def _submit_guess(self):
-        logger.info('Submitting guess from GuessHistorySection')
-        state = await run.io_bound(self._view_model.submit_guess)
-        if state is None:
-            logger.info('Guess submission ignored because state is unavailable')
+        if self._is_submitting:
+            logger.info('Guess submission ignored because another submission is already in-flight')
             return
+
+        state = self._view_model.state
+        if state is not None and state.is_completed:
+            logger.info('Guess submission ignored because challenge is already solved')
+            return
+
+        self._is_submitting = True
+        logger.info('Submitting guess from GuessHistorySection')
         await self.render.refresh()
-        await self._on_guess_submitted()
+        try:
+            state = await run.io_bound(self._view_model.submit_guess)
+            if state is None:
+                logger.info('Guess submission ignored because state is unavailable')
+                return
+            await self.render.refresh()
+            await self._on_guess_submitted()
+        finally:
+            self._is_submitting = False
+            await self.render.refresh()
 
     def _reset_selection(self):
         self._view_model.reset_selection()
