@@ -27,8 +27,7 @@ class DailyChallengeRouter:
         return state.model_dump()
 
     async def get_supported_emojis(self):
-        categories = self.emoji_service.fetch_grouped_supported_emoji_metadata()
-        return {"categories": [category.to_dict() for category in categories]}
+        return {"categories": list(self.emoji_service.fetch_grouped_supported_emoji_payload())}
 
     async def submit_guess(self,
                            request: Request,

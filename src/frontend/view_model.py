@@ -21,6 +21,7 @@ class BlurmojiViewModel:
     def __init__(self, client: GameClient):
         self._client = client
         self._initial_data_lock = asyncio.Lock()
+        self._initial_data_task: Optional[asyncio.Task[None]] = None
         self._state: Optional[ChallengeState] = None
         self._emoji_pool: tuple[EmojiCategoryData, ...] = ()
         self._rendered_image: Optional[Image] = None
@@ -80,19 +81,29 @@ class BlurmojiViewModel:
             if self.has_initial_data():
                 logger.info("Using cached initial game data")
                 return
-            logger.info("Loading initial game data")
-            self._emoji_pool = await asyncio.to_thread(self._client.get_supported_emojis)
-            logger.info("Loaded supported emojis: count=%d", len(self._emoji_pool))
-            self._state = await asyncio.to_thread(self._client.create_daily_challenge)
-            logger.info(
-                "Loaded challenge state: attempts=%s max_attempts=%s completed=%s",
-                self._state.attempts,
-                self._state.max_attempts,
-                self._state.is_completed,
-            )
-            self._rendered_image = await asyncio.to_thread(self._client.get_rendered_image)
-            logger.info("Loaded rendered image: available=%s", self._rendered_image is not None)
-            self.reset_selection()
+
+            if self._initial_data_task is None or self._initial_data_task.done():
+                logger.info("Loading initial game data")
+                self._initial_data_task = asyncio.create_task(self._load_initial_data_once())
+            else:
+                logger.info("Awaiting in-flight initial data load")
+            load_task = self._initial_data_task
+
+        await load_task
+
+    async def _load_initial_data_once(self) -> None:
+        self._emoji_pool = await asyncio.to_thread(self._client.get_supported_emojis)
+        logger.info("Loaded supported emojis: count=%d", len(self._emoji_pool))
+        self._state = await asyncio.to_thread(self._client.create_daily_challenge)
+        logger.info(
+            "Loaded challenge state: attempts=%s max_attempts=%s completed=%s",
+            self._state.attempts,
+            self._state.max_attempts,
+            self._state.is_completed,
+        )
+        self._rendered_image = await asyncio.to_thread(self._client.get_rendered_image)
+        logger.info("Loaded rendered image: available=%s", self._rendered_image is not None)
+        self.reset_selection()
 
     def select_emoji(self, emoji: EmojiData) -> None:
         if not self._state or self.is_interaction_locked or self._is_submitting_guess:

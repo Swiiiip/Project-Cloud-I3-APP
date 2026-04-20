@@ -1,5 +1,6 @@
 import json
 import logging
+import threading
 from pathlib import Path
 from typing import Any, Optional
 
@@ -12,14 +13,22 @@ class FileEmojiRepository(AbstractEmojiRepository):
     def __init__(self, storage_path: Path):
         self._storage_path = storage_path
         self._cache: dict[str, Any] = {}
+        self._loaded = False
+        self._is_dirty = False
+        self._lock = threading.Lock()
 
     def __enter__(self) -> "FileEmojiRepository":
-        if self._storage_path.exists():
-            self._load()
+        with self._lock:
+            if not self._loaded:
+                self._load()
+                self._loaded = True
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._save()
+        with self._lock:
+            if exc_type is None and self._is_dirty:
+                self._save()
+                self._is_dirty = False
 
     def get_all_raw_emojis(self) -> dict[str, Any]:
         return self._cache
@@ -30,15 +39,21 @@ class FileEmojiRepository(AbstractEmojiRepository):
     def save_raw_emoji(self, codepoint: str, data: dict[str, Any]):
         if codepoint not in self._cache:
             self._cache[codepoint] = data
+            self._is_dirty = True
 
     def update_combination_entry(self, source_codepoint: str, target_codepoint: str, data: dict[str, Any]):
         if source_codepoint in self._cache:
-            self._cache[source_codepoint]["combinations"][target_codepoint] = data
+            combinations = self._cache[source_codepoint].setdefault("combinations", {})
+            if combinations.get(target_codepoint) != data:
+                combinations[target_codepoint] = data
+                self._is_dirty = True
 
     def _load(self):
         if self._storage_path.exists():
             with self._storage_path.open("r", encoding="utf-8") as f:
                 self._cache = json.load(f)
+        else:
+            self._cache = {}
 
     def _save(self):
         self._storage_path.parent.mkdir(parents=True, exist_ok=True)

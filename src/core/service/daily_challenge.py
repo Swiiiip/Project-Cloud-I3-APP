@@ -23,6 +23,9 @@ class DailyChallengeService:
         self._storage = storage
         self._guess_locks: dict[str, threading.Lock] = {}
         self._guess_locks_guard = threading.Lock()
+        self._daily_combination_lock = threading.Lock()
+        self._cached_daily_combination_date: date | None = None
+        self._cached_daily_combination: CombinationData | None = None
 
     def get_user_state(self, user_id: str) -> ChallengeState:
         state = self._storage.get_state(user_id)
@@ -134,8 +137,13 @@ class DailyChallengeService:
         )
 
     def _pick_daily_combination(self) -> CombinationData:
+        today = date.today()
+        with self._daily_combination_lock:
+            if self._cached_daily_combination_date == today and self._cached_daily_combination is not None:
+                return self._cached_daily_combination
+
         emojis = self._emoji_service.fetch_all_supported_emoji_codepoints()
-        random.seed(int(date.today().strftime("%Y%m%d")))
+        random.seed(int(today.strftime("%Y%m%d")))
 
         for _ in range(self._max_combination_retries):
             first_codepoint = random.choice(emojis)
@@ -145,5 +153,8 @@ class DailyChallengeService:
             combination = self._emoji_service.fetch_combination_data(first_codepoint, second_codepoint)
             if combination is not None:
                 logger.info(f"Daily emoji couple to guess : {combination.emoji_couple}")
+                with self._daily_combination_lock:
+                    self._cached_daily_combination_date = today
+                    self._cached_daily_combination = combination
                 return combination
         raise ValueError(f"No combination could be found after {self._max_combination_retries} retries.")
