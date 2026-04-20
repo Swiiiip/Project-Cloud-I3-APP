@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Tuple
 
 from pydantic import BaseModel
 
@@ -14,5 +13,5 @@ class ChallengeState(BaseModel):
     attempts: int
     max_attempts: int
     is_completed: bool
-    past_guesses: Tuple[EmojiDataCouple, ...]
-    past_guess_matches: Tuple[GuessSlotMatch, ...] = ()
+    past_guesses: tuple[EmojiDataCouple, ...]
+    past_guess_matches: tuple[GuessSlotMatch, ...] = ()

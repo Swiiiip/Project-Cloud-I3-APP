@@ -64,7 +64,7 @@ class DailyChallengeService:
                 logger.info("Ignoring guess for user '%s' because user already won", user_id)
                 return state
 
-            is_correct_guess = codepoint_couple_guess == state.answer.emoji_codepoint_couple
+            is_correct_guess = self._is_correct_guess(codepoint_couple_guess, state.answer.emoji_codepoint_couple)
             logger.info(f"User '{user_id}' made a guess with codepoints: {codepoint_couple_guess}. Attempts: {state.attempts}/{state.max_attempts}. Guess correct: {is_correct_guess}")
             emoji_couple_guess = EmojiDataCouple(first_emoji=self._emoji_service.fetch_emoji_by_codepoint(codepoint_couple_guess.first_emoji_codepoint),
                                                  second_emoji=self._emoji_service.fetch_emoji_by_codepoint(codepoint_couple_guess.second_emoji_codepoint))
@@ -105,6 +105,12 @@ class DailyChallengeService:
                 answer_remaining[guess_codepoint] = available - 1
 
         return GuessSlotMatch(first_slot_match=slot_matches[0], second_slot_match=slot_matches[1])
+
+    @staticmethod
+    def _is_correct_guess(guess: EmojiCodepointCouple, answer: EmojiCodepointCouple) -> bool:
+        return sorted((guess.first_emoji_codepoint, guess.second_emoji_codepoint)) == sorted(
+            (answer.first_emoji_codepoint, answer.second_emoji_codepoint)
+        )
 
     @staticmethod
     def _with_backfilled_guess_matches(state: ChallengeState) -> ChallengeState:

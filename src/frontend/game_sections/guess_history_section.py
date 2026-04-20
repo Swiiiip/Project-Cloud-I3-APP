@@ -22,7 +22,7 @@ class GuessHistorySection:
         state = self._view_model.state
         if not state:
             logger.info('GuessHistorySection waiting for challenge state')
-            with ui.card().classes(UIClasses.PANEL_CARD_CENTERED):
+            with ui.card().classes(f'{UIClasses.PANEL_CARD_CENTERED} flex-1'):
                 ui.spinner(size='lg')
             return
 

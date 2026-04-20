@@ -1,6 +1,4 @@
 import logging
-from collections import OrderedDict
-from typing import Tuple
 
 from src.core.emoji.dto.combination_data import CombinationData
 from src.core.emoji.dto.emoji_couple import EmojiDataCouple
@@ -10,7 +8,6 @@ from src.core.emoji.emoji_data_populator import EmojiDataPopulator
 from src.persistence.abstract_emoji_repository import AbstractEmojiRepository
 
 logger = logging.getLogger(__name__)
-UNKNOWN_CATEGORY = "Unknown"
 
 
 class EmojiKitchenService:
@@ -42,7 +39,7 @@ class EmojiKitchenService:
             name=raw_combination["name"]
         )
 
-    def fetch_available_codepoints_for_combination(self, reference_codepoint: str) -> Tuple[str]:
+    def fetch_available_codepoints_for_combination(self, reference_codepoint: str) -> tuple[str, ...]:
         raw_combinations = self._get_available_raw_combinations_for_codepoint(reference_codepoint)
         return tuple(raw_combinations.keys())
 
@@ -53,17 +50,17 @@ class EmojiKitchenService:
                 raise ValueError(f"Could not fetch emoji with codepoint '{codepoint}'")
             return EmojiData.from_dict(raw_emoji)
 
-    def fetch_all_supported_emoji_codepoints(self) -> Tuple[str, ...]:
+    def fetch_all_supported_emoji_codepoints(self) -> tuple[str, ...]:
         with self._repository as repo:
             raw_data = repo.get_all_raw_emojis()
             return tuple(raw["codepoint"] for raw in raw_data.values())
 
-    def fetch_all_supported_emoji_metadata(self) -> Tuple[EmojiData, ...]:
+    def fetch_all_supported_emoji_metadata(self) -> tuple[EmojiData, ...]:
         with self._repository as repo:
             raw_data = repo.get_all_raw_emojis()
             return tuple(EmojiData.from_dict(raw) for raw in raw_data.values())
 
-    def fetch_grouped_supported_emoji_metadata(self) -> Tuple[EmojiCategoryData, ...]:
+    def fetch_grouped_supported_emoji_metadata(self) -> tuple[EmojiCategoryData, ...]:
         emojis = self.fetch_all_supported_emoji_metadata()
         grouped_emojis = self._group_by_category(emojis)
         return tuple(
@@ -79,25 +76,20 @@ class EmojiKitchenService:
             return first_raw_emoji.get("combinations", {})
 
     @staticmethod
-    def _group_by_category(emojis: Tuple[EmojiData, ...]) -> OrderedDict[str, list[EmojiData]]:
+    def _group_by_category(emojis: tuple[EmojiData, ...]) -> dict[str, list[EmojiData]]:
         grouped: dict[str, list[EmojiData]] = {}
         for emoji in sorted(emojis, key=EmojiKitchenService._sort_emoji_key):
-            category_name = EmojiKitchenService._normalize_category_name(emoji.category)
-            grouped.setdefault(category_name, []).append(emoji)
+            grouped.setdefault(emoji.category, []).append(emoji)
 
-        return OrderedDict(sorted(grouped.items(), key=lambda item: item[0].casefold()))
+        return dict(sorted(grouped.items(), key=lambda item: item[0].casefold()))
 
     @staticmethod
     def _sort_emoji_key(emoji: EmojiData) -> tuple[str, int, str]:
         return (
-            EmojiKitchenService._normalize_category_name(emoji.category),
+            emoji.category,
             emoji.keyboard_position,
             emoji.name,
         )
-
-    @staticmethod
-    def _normalize_category_name(category_name: str | None) -> str:
-        return category_name or UNKNOWN_CATEGORY
 
     def _populate_repository(self):
         with self._repository as repo:

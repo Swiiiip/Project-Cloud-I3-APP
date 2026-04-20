@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from typing import Dict, Any, List
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -9,12 +9,12 @@ class EmojiData:
     character: str
     codepoint: str
     keyboard_position: int  # TODO might be useless...
-    keywords: List[str]
+    keywords: list[str]
     category: str
     subcategory: str
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EmojiData":
+    def from_dict(cls, data: dict[str, Any]) -> "EmojiData":
         return cls(
             name=data["name"],
             character=data["character"],
@@ -25,7 +25,7 @@ class EmojiData:
             subcategory=data["subcategory"]
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "character": self.character,

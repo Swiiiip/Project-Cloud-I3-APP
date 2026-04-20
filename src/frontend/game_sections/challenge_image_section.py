@@ -19,14 +19,12 @@ class ChallengeImageSection:
         rendered_image = self._view_model.rendered_image
         if not state or rendered_image is None:
             logger.info('ChallengeImageSection waiting for initial data: has_state=%s has_image=%s', state is not None, rendered_image is not None)
-            with ui.card().classes(UIClasses.PANEL_CARD_CENTERED):
+            with ui.card().classes(f'{UIClasses.PANEL_CARD_CENTERED} flex-1'):
                 ui.spinner(size='lg')
             return
 
-        with ui.card().classes(f'{UIClasses.PANEL_CARD_PADDED} items-center justify-center'):
+        with ui.card().classes(f'{UIClasses.PANEL_CARD_PADDED} flex-1 min-h-0'):
             ui.label(format_daily_challenge_label(date.today().strftime('%d-%m-%Y'))).classes(UIClasses.DAILY_CHALLENGE_TEXT)
-            ui.image(rendered_image).classes(UIClasses.CHALLENGE_IMAGE)
-            if state.is_completed:
-                ui.label(UIContent.SOLVED_LABEL).classes(UIClasses.SOLVED_LABEL)
-
+            with ui.column().classes(UIClasses.CHALLENGE_IMAGE_CONTAINER):
+                ui.image(rendered_image).classes(UIClasses.CHALLENGE_IMAGE)
         logger.info('Rendered challenge image: attempts=%s completed=%s', state.attempts, state.is_completed)

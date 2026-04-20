@@ -30,7 +30,7 @@ class EmojiGridSection:
 
         if not emoji_categories:
             logger.info('EmojiGridSection render skipped because emoji pool is empty')
-            with ui.card().classes(UIClasses.EMOJI_LOADING_CARD):
+            with ui.card().classes(f'{UIClasses.EMOJI_LOADING_CARD} flex-1'):
                 ui.spinner(size='md')
             return
 
@@ -44,7 +44,7 @@ class EmojiGridSection:
 
             if self._selected_category not in categories_by_name:
                 logger.warning('EmojiGridSection has no selected category after grouping')
-                with ui.card().classes(UIClasses.PANEL_CARD_CENTERED):
+                with ui.card().classes(f'{UIClasses.PANEL_CARD_CENTERED} flex-1'):
                     ui.label(UIContent.NO_EMOJIS_LABEL).classes(UIClasses.MUTED_TEXT)
                 return
 
@@ -71,7 +71,7 @@ class EmojiGridSection:
             )
         except Exception as exc:
             logger.exception('EmojiGridSection render failed: %s', exc)
-            with ui.card().classes(UIClasses.EMOJI_ERROR_CARD):
+            with ui.card().classes(f'{UIClasses.EMOJI_ERROR_CARD} flex-1'):
                 ui.label(UIContent.EMOJI_GRID_ERROR_LABEL).classes(UIClasses.ERROR_TEXT)
 
     def _ensure_selected_category(self, categories: tuple[EmojiCategoryData, ...]) -> str:
@@ -80,23 +80,18 @@ class EmojiGridSection:
             return UIContent.UNKNOWN_CATEGORY
 
         selected_category = self._selected_category
-        category_sizes = {category.category: len(category.emojis) for category in categories}
-        category_names = set(category_sizes)
-        if selected_category and selected_category in category_names:
+        category_names = {category.category for category in categories}
+        if selected_category and selected_category in category_names and selected_category != UIContent.UNKNOWN_CATEGORY:
             logger.info('EmojiGridSection keeping selected category=%s', selected_category)
             return selected_category
 
-        preferred_categories = [category for category in categories if category.category != UIContent.UNKNOWN_CATEGORY]
-        if preferred_categories:
-            selected_category = max(preferred_categories, key=lambda category: len(category.emojis)).category
-        else:
-            selected_category = max(categories, key=lambda category: len(category.emojis)).category
-        logger.info(
-            'EmojiGridSection selected default category=%s size=%d',
-            selected_category,
-            category_sizes[selected_category],
-        )
-        return selected_category
+        for category in categories:
+            if category.category != UIContent.UNKNOWN_CATEGORY:
+                logger.info('EmojiGridSection selected default category=%s', category.category)
+                return category.category
+
+        logger.info('EmojiGridSection selected default category=%s', UIContent.UNKNOWN_CATEGORY)
+        return UIContent.UNKNOWN_CATEGORY
 
     def _select_category(self, category_name: str) -> None:
         if self._view_model.is_interaction_locked:
@@ -116,13 +111,13 @@ class EmojiGridSection:
         else:
             button.props(UIProps.EMOJI_CATEGORY_INACTIVE_BUTTON)
 
-
     def _create_emoji_button(self, emoji: EmojiData, is_locked: bool):
-        button = ui.button(
+        with ui.button(
             emoji.character,
             on_click=lambda selected=emoji: self._on_emoji_selected(selected)
-        ).props(UIProps.EMOJI_PICKER_BUTTON).classes(UIClasses.EMOJI_BUTTON)
-        button.enabled = not is_locked
+        ).props(UIProps.EMOJI_PICKER_BUTTON).classes(UIClasses.EMOJI_BUTTON) as button:
+            button.enabled = not is_locked
+            ui.tooltip(emoji.name)
 
     def _on_emoji_selected(self, emoji: EmojiData):
         logger.info('Emoji selected: category=%s codepoint=%s name=%s', emoji.category, emoji.codepoint, emoji.name)

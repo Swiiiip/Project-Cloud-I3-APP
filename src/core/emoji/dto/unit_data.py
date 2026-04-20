@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from typing import Tuple, Dict, Any
+from typing import Any
 
 from src.core.emoji.dto.combination_data import CombinationData
 from src.core.emoji.dto.emoji_data import EmojiData
@@ -9,9 +9,9 @@ from src.core.emoji.dto.emoji_data import EmojiData
 @dataclass(frozen=True)
 class UnitData:
     reference_emoji: EmojiData
-    combinations: Tuple[CombinationData, ...]
+    combinations: tuple[CombinationData, ...]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {"name": self.reference_emoji.name,
                 "character": self.reference_emoji.character,
                 "codepoint": self.reference_emoji.codepoint,
@@ -19,5 +19,4 @@ class UnitData:
                 "keywords": self.reference_emoji.keywords,
                 "category": self.reference_emoji.category,
                 "subcategory": self.reference_emoji.subcategory,
-                "combinations": tuple([combo.to_dict()
-                                       for combo in self.combinations])}
+                "combinations": tuple(combo.to_dict() for combo in self.combinations)}

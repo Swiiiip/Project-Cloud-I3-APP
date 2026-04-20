@@ -1,6 +1,5 @@
 import io
 import logging
-from typing import Tuple
 
 import requests
 from PIL.Image import Image, open
@@ -37,7 +36,7 @@ class GameClient:
         response = self._session.get(url, timeout=Config.REQUEST_TIMEOUT_SECONDS)
         return ChallengeState.model_validate(response.json())
 
-    def get_supported_emojis(self) -> Tuple[EmojiCategoryData, ...]:
+    def get_supported_emojis(self) -> tuple[EmojiCategoryData, ...]:
         url = f"{self._base_url}/api/v1/daily/supported_emojis"
         response = self._session.get(url, timeout=Config.REQUEST_TIMEOUT_SECONDS)
         data = response.json().get("categories", [])

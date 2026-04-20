@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from src.core.emoji.dto.emoji_data import EmojiData
 
@@ -7,16 +7,16 @@ from src.core.emoji.dto.emoji_data import EmojiData
 @dataclass(frozen=True)
 class EmojiCategoryData:
     category: str
-    emojis: Tuple[EmojiData, ...]
+    emojis: tuple[EmojiData, ...]
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EmojiCategoryData":
+    def from_dict(cls, data: dict[str, Any]) -> "EmojiCategoryData":
         return cls(
             category=data["category"],
             emojis=tuple(EmojiData.from_dict(raw_emoji) for raw_emoji in data.get("emojis", [])),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "category": self.category,
             "emojis": [emoji.to_dict() for emoji in self.emojis],

@@ -45,7 +45,7 @@ class WebHandler:
             ui.timer(0.1, view.load_initial_data, once=True)
 
         ui.run(
-            title="Blurmoji",
+            title=UIContent.APP_TITLE,
             dark=True,
             host=self._host,
             port=self._port,

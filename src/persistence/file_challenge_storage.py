@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Optional
 
 from src.core.gameplay.dto.challenge_state import ChallengeState
 from src.persistence.abstract_challenge_storage import AbstractChallengeStorage
@@ -12,11 +12,11 @@ class FileChallengeStorage(AbstractChallengeStorage):
         if not self.file_path.exists():
             self.file_path.write_text("{}")
 
-    def _load_all(self) -> Dict[str, str]:
+    def _load_all(self) -> dict[str, str]:
         with open(self.file_path, 'r') as f:
             return json.load(f)
 
-    def _save_all(self, data: Dict[str, str]):
+    def _save_all(self, data: dict[str, str]):
         with open(self.file_path, 'w') as f:
             json.dump(data, f, indent=4)
 

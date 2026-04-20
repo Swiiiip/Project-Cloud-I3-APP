@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Optional
 
 from src.persistence.abstract_emoji_repository import AbstractEmojiRepository
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class FileEmojiRepository(AbstractEmojiRepository):
     def __init__(self, storage_path: Path):
         self._storage_path = storage_path
-        self._cache: Dict[str, Any] = {}
+        self._cache: dict[str, Any] = {}
 
     def __enter__(self) -> "FileEmojiRepository":
         if self._storage_path.exists():
@@ -21,17 +21,17 @@ class FileEmojiRepository(AbstractEmojiRepository):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._save()
 
-    def get_all_raw_emojis(self) -> Dict[str, Any]:
+    def get_all_raw_emojis(self) -> dict[str, Any]:
         return self._cache
 
-    def get_raw_emoji(self, codepoint: str) -> Optional[Dict[str, Any]]:
+    def get_raw_emoji(self, codepoint: str) -> Optional[dict[str, Any]]:
         return self._cache.get(codepoint)
 
-    def save_raw_emoji(self, codepoint: str, data: Dict[str, Any]):
+    def save_raw_emoji(self, codepoint: str, data: dict[str, Any]):
         if codepoint not in self._cache:
             self._cache[codepoint] = data
 
-    def update_combination_entry(self, source_codepoint: str, target_codepoint: str, data: Dict[str, Any]):
+    def update_combination_entry(self, source_codepoint: str, target_codepoint: str, data: dict[str, Any]):
         if source_codepoint in self._cache:
             self._cache[source_codepoint]["combinations"][target_codepoint] = data
 

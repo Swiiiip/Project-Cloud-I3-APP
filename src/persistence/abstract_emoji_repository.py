@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
+from typing import Optional, Any
 
 
 class AbstractEmojiRepository(ABC):
@@ -12,17 +12,17 @@ class AbstractEmojiRepository(ABC):
         pass
 
     @abstractmethod
-    def get_all_raw_emojis(self) -> Dict[str, Any]:
+    def get_all_raw_emojis(self) -> dict[str, Any]:
         pass
 
     @abstractmethod
-    def get_raw_emoji(self, codepoint: str) -> Optional[Dict[str, Any]]:
+    def get_raw_emoji(self, codepoint: str) -> Optional[dict[str, Any]]:
         pass
 
     @abstractmethod
-    def save_raw_emoji(self, codepoint: str, data: Dict[str, Any]):
+    def save_raw_emoji(self, codepoint: str, data: dict[str, Any]):
         pass
 
     @abstractmethod
-    def update_combination_entry(self, source_codepoint: str, target_codepoint: str, data: Dict[str, Any]):
+    def update_combination_entry(self, source_codepoint: str, target_codepoint: str, data: dict[str, Any]):
         pass
