@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from src.api.routes.daily_challenge_router import DailyChallengeRouter
 from src.api.session.cookie_session_resolver import CookieSessionResolver
+from src.config import Config
 from src.core.gameplay.image_blur_processor import ImageBlurProcessingService
 from src.core.service.daily_challenge import DailyChallengeService
 from src.core.service.emoji_kitchen import EmojiKitchenService
@@ -19,7 +20,7 @@ class BlurmojiApiBootstrapper:
         emoji_kitchen_service = EmojiKitchenService(repo)
         challenge_repository = ChallengeStorageFactory.create(PathHandler.root_dir())
         game_service = DailyChallengeService(emoji_kitchen_service, challenge_repository)
-        image_blur_processor = ImageBlurProcessingService()
+        image_blur_processor = ImageBlurProcessingService(blur_levels=Config.DAILY_CHALLENGE_MAX_GUESSES)
         session_resolver = CookieSessionResolver()
 
         daily_router = DailyChallengeRouter(game_service,

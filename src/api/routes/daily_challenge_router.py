@@ -54,7 +54,7 @@ class DailyChallengeRouter:
         else:
             pil_image = self.image_service.get_processed_image(
                 state.answer.result_image_url,
-                state.attempts
+                state.max_attempts - state.attempts
             )
         buffer = io.BytesIO()
         pil_image.save(buffer, format="PNG")

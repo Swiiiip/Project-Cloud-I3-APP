@@ -4,15 +4,15 @@ from io import BytesIO
 import requests
 from PIL import ImageFilter
 from PIL.Image import Image, open, Resampling
-
-from src.config import Config
+from numpy import linspace
 
 logger = logging.getLogger(__name__)
 
 
 class ImageBlurProcessingService:
-    def __init__(self):
-        self._blur_scale = [scale**2 for scale in range(2, Config.DAILY_CHALLENGE_MAX_GUESSES+2)][::-1]
+    def __init__(self,
+                 blur_levels: int):
+        self._blur_scale = tuple(linspace(0, blur_levels ** 2, num=blur_levels).round().astype(int).tolist())
         logger.info("Blur scale set to : %s", self._blur_scale)
 
     def get_processed_image(self, image_url: str, blur_level: int) -> Image:
@@ -31,9 +31,14 @@ class ImageBlurProcessingService:
         response.raise_for_status()
         return open(BytesIO(response.content)).convert("RGBA")
 
-    def _apply_game_effect(self, img: Image, attempt_count: int) -> Image:
+    def _apply_game_effect(self, img: Image, blur_level: int) -> Image:
         try:
-            blur_radius = self._blur_scale[attempt_count]
+            if blur_level >= len(self._blur_scale):
+                blur_index = len(self._blur_scale) - 1
+            else:
+                blur_index = blur_level
+            blur_radius = self._blur_scale[blur_index]
+            logger.info("Applying blur effect with radius %d for blur level %d", blur_radius, blur_level)
         except IndexError:
             blur_radius = 0
         if blur_radius == 0:
@@ -43,5 +48,5 @@ class ImageBlurProcessingService:
             (img.size[0] // pixel_size, img.size[1] // pixel_size),
             resample=Resampling.NEAREST
         )
-        pixelated = small.resize(img.size, Resampling.NEAREST)
-        return pixelated.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+        blurred = small.resize(img.size, Resampling.NEAREST)
+        return blurred.filter(ImageFilter.GaussianBlur(radius=blur_radius))

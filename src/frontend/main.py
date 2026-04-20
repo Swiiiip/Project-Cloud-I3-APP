@@ -14,12 +14,13 @@ from src.utils.path_handler import PathHandler
 
 
 class WebHandler:
-    def __init__(self, api_base_url: str, host: str, port: int,
-                 state_provider: AbstractFrontendStateProvider | None = None):
-        self._api_base_url = api_base_url
+    def __init__(self,
+                 host: str,
+                 port: int,
+                 state_provider: AbstractFrontendStateProvider):
         self._host = host
         self._port = port
-        self._state_provider = state_provider or InMemoryFrontendStateProvider(api_base_url)
+        self._state_provider = state_provider
 
     def _get_session_state(self) -> FrontendSessionState:
         return self._state_provider.get_state()
@@ -66,9 +67,7 @@ if __name__ == '__main__':
     LoggerConfigurator.config_logger()
     load_dotenv(dotenv_path=PathHandler.dot_env(), override=False)
 
-    web = WebHandler(
-        api_base_url=os.environ["API_BASE_URL"],
-        host=os.environ["FRONTEND_HOST"],
-        port=int(os.environ["FRONTEND_PORT"])
-    )
+    web = WebHandler(host=os.environ["FRONTEND_HOST"],
+                     port=int(os.environ["FRONTEND_PORT"]),
+                     state_provider=InMemoryFrontendStateProvider(os.environ["API_BASE_URL"]))
     web.run(reload=False)
