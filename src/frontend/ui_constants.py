@@ -1,0 +1,97 @@
+class UIColors:
+    BODY_BACKGROUND = '#121212'
+    BODY_TEXT = 'white'
+    PANEL_BACKGROUND = '#1e1e1e'
+    PANEL_BORDER = '#333'
+    SLOT_BACKGROUND = '#111'
+    SLOT_BORDER = '#555'
+    ATTEMPT_BACKGROUND = '#151515'
+    ATTEMPT_BORDER = '#222'
+    GRID_SCROLL_BORDER = '#2a2a2a'
+    SUBMIT_ENABLED = '#16a34a'
+    SUBMIT_DISABLED = '#6b7280'
+    ERROR_ICON = 'red-500'
+
+
+class UIContent:
+    APP_TITLE = '🤫 BLURMOJI'
+    SOLVED_LABEL = 'SOLVED'
+    NO_EMOJIS_LABEL = 'No emojis available'
+    EMOJI_GRID_ERROR_LABEL = 'Keyboard failed to render'
+    UNKNOWN_CATEGORY = 'Unknown'
+    DEFAULT_SLOT_CHAR = '?'
+    ATTEMPTS_LABEL_TEMPLATE = 'ATTEMPTS: {attempts} / {max_attempts}'
+    EMPTY_ATTEMPT_LABEL = '• •'
+    GUESS_PAIR_SEPARATOR = ' • '
+
+
+class UIClasses:
+    BODY = f'bg-[{UIColors.BODY_BACKGROUND}] text-[{UIColors.BODY_TEXT}]'
+    HEADER = f'bg-[{UIColors.PANEL_BACKGROUND}] border-b border-[{UIColors.PANEL_BORDER}] items-center justify-center w-full'
+    HEADER_TITLE = 'text-2xl font-black tracking-tighter p-4'
+
+    MAIN_LAYOUT = 'w-full h-[calc(100vh-88px)] min-h-0 gap-3 p-3 items-stretch content-stretch overflow-auto flex-wrap'
+    COLUMN_BASE = 'h-full min-h-0 overflow-hidden'
+    IMAGE_COLUMN = 'flex-[2_1_420px] min-w-[320px]'
+    HISTORY_COLUMN = 'flex-[1_1_300px] min-w-[280px]'
+    EMOJI_COLUMN = 'flex-[2_1_420px] min-w-[320px]'
+
+    PANEL_CARD = f'w-full h-full bg-[{UIColors.PANEL_BACKGROUND}] border border-[{UIColors.PANEL_BORDER}]'
+    PANEL_CARD_CENTERED = f'{PANEL_CARD} items-center justify-center'
+    PANEL_CARD_PADDED = f'{PANEL_CARD} p-3'
+
+    WORKBENCH_CONTAINER = 'w-full h-full gap-3 overflow-hidden'
+    WORKBENCH_CARD = f'w-full bg-[{UIColors.PANEL_BACKGROUND}] border border-[{UIColors.PANEL_BORDER}] p-3'
+    WORKBENCH_ROW = 'items-center justify-between gap-3'
+    SLOT_ROW = 'gap-2'
+    SLOT_LABEL = f'w-14 h-14 flex items-center justify-center bg-[{UIColors.SLOT_BACKGROUND}] rounded-lg text-3xl border border-[{UIColors.SLOT_BORDER}]'
+
+    HISTORY_CARD = f'w-full flex-1 bg-[{UIColors.PANEL_BACKGROUND}] border border-[{UIColors.PANEL_BORDER}] p-3 overflow-hidden'
+    HISTORY_SCROLL = 'w-full h-full gap-2 overflow-auto pr-1'
+    ATTEMPTS_META = 'text-gray-400 text-xs font-black'
+    ATTEMPT_ROW = f'w-full justify-between items-center bg-[{UIColors.ATTEMPT_BACKGROUND}] p-2 rounded-lg border border-[{UIColors.ATTEMPT_BORDER}] h-12'
+    ATTEMPT_GUESS = 'text-2xl ml-2'
+    ATTEMPT_EMPTY = 'text-gray-800 text-2xl ml-2'
+    ATTEMPT_ICON = 'mr-2'
+    MUTED_TEXT = 'text-gray-400'
+    ERROR_TEXT = 'text-red-400'
+
+    EMOJI_LOADING_CARD = PANEL_CARD_CENTERED
+    EMOJI_CARD = f'{PANEL_CARD} min-h-0 overflow-hidden p-2'
+    EMOJI_ERROR_CARD = f'{PANEL_CARD} border-red-700 items-center justify-center'
+    EMOJI_COLUMN_IN_CARD = 'w-full h-full min-h-0 gap-2 overflow-hidden'
+    CATEGORY_ROW = 'w-full gap-1 overflow-x-auto flex-nowrap items-center'
+    EMOJI_SCROLL_AREA = f'w-full h-full flex-1 min-h-0 border border-[{UIColors.GRID_SCROLL_BORDER}] rounded-md p-1'
+    EMOJI_BUTTON_ROW = 'w-full justify-start items-start content-start gap-1 flex-wrap'
+    EMOJI_BUTTON = 'text-2xl p-1 rounded-lg hover:bg-white/10 w-10 h-10'
+
+    CHALLENGE_IMAGE = 'w-full h-auto max-h-full object-contain rounded-lg'
+    SOLVED_LABEL = 'text-center font-bold text-xl mt-2 text-green-500'
+
+
+class UIProps:
+    ROUND_BUTTON = 'round'
+    DELETE_BUTTON = 'round flat color=grey'
+    EMOJI_CATEGORY_BUTTON = 'dense no-caps'
+    EMOJI_CATEGORY_ACTIVE_BUTTON = 'color=primary'
+    EMOJI_CATEGORY_INACTIVE_BUTTON = 'flat color=grey-7'
+    EMOJI_PICKER_BUTTON = 'flat'
+
+
+class UIIcons:
+    SUBMIT = 'check'
+    RESET = 'delete'
+    FAILED_ATTEMPT = 'close'
+
+
+def format_attempts_label(attempts: int, max_attempts: int) -> str:
+    return UIContent.ATTEMPTS_LABEL_TEMPLATE.format(attempts=attempts, max_attempts=max_attempts)
+
+
+def format_guess_pair(first_character: str, second_character: str) -> str:
+    return f'{first_character}{UIContent.GUESS_PAIR_SEPARATOR}{second_character}'
+
+
+
+
+

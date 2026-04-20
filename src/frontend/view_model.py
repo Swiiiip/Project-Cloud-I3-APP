@@ -8,12 +8,13 @@ from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple
 from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.gameplay.dto.challenge_state import ChallengeState
 from src.frontend.game_client import GameClient
+from src.frontend.ui_constants import UIContent
 
 logger = logging.getLogger(__name__)
 
 
 class BlurmojiViewModel:
-    _default_unselected_char = '?'
+    _default_unselected_char = UIContent.DEFAULT_SLOT_CHAR
 
     def __init__(self, client: GameClient):
         self._client = client
@@ -46,6 +47,10 @@ class BlurmojiViewModel:
     @property
     def char_2(self) -> str:
         return self._char_2
+
+    @property
+    def can_submit(self) -> bool:
+        return self._can_confirm
 
     def has_initial_data(self) -> bool:
         return self._state is not None and self._rendered_image is not None and len(self._emoji_pool) > 0

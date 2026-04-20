@@ -1,9 +1,12 @@
+# pyright: reportArgumentType=false
+
 import logging
-from collections import OrderedDict
+from typing import cast, OrderedDict
 
 from nicegui import ui
 
 from src.core.emoji.dto.emoji_data import EmojiData
+from src.frontend.ui_constants import UIClasses, UIContent, UIProps
 from src.frontend.view_model import BlurmojiViewModel
 
 logger = logging.getLogger(__name__)
@@ -12,7 +15,7 @@ logger = logging.getLogger(__name__)
 class EmojiGridSection:
     def __init__(self, view_model: BlurmojiViewModel):
         self._view_model = view_model
-        self._selected_category: str | None = None
+        self._selected_category: str = UIContent.UNKNOWN_CATEGORY
 
     @ui.refreshable
     def render(self):
@@ -21,40 +24,33 @@ class EmojiGridSection:
 
         if not emoji_pool:
             logger.info('EmojiGridSection render skipped because emoji pool is empty')
-            with ui.card().classes('w-full h-full bg-[#1e1e1e] border border-[#333] items-center justify-center'):
+            with ui.card().classes(UIClasses.EMOJI_LOADING_CARD):
                 ui.spinner(size='md')
             return
 
         try:
             categories = self._group_by_category(emoji_pool)
             logger.info('EmojiGridSection grouped pool into %d categories: %s', len(categories), list(categories.keys()))
-            self._ensure_selected_category(categories)
+            self._selected_category = self._ensure_selected_category(categories)
 
-            if self._selected_category is None:
+            if self._selected_category not in categories:
                 logger.warning('EmojiGridSection has no selected category after grouping')
-                with ui.card().classes('w-full h-full bg-[#1e1e1e] border border-[#333] items-center justify-center'):
-                    ui.label('No emojis available').classes('text-gray-400')
+                with ui.card().classes(UIClasses.PANEL_CARD_CENTERED):
+                    ui.label(UIContent.NO_EMOJIS_LABEL).classes(UIClasses.MUTED_TEXT)
                 return
 
             current_emojis = categories[self._selected_category]
             logger.info('EmojiGridSection rendering category=%s size=%d', self._selected_category, len(current_emojis))
 
-            with ui.card().classes('w-full h-full min-h-0 overflow-hidden bg-[#1e1e1e] border border-[#333] p-2'):
-                with ui.column().classes('w-full h-full min-h-0 gap-2 overflow-hidden'):
-                    with ui.row().classes('w-full gap-1 overflow-x-auto flex-nowrap items-center'):
-                        for category_name in categories:
-                            is_active = category_name == self._selected_category
-                            button = ui.button(
-                                category_name,
-                                on_click=lambda selected=category_name: self._select_category(selected)
-                            ).props('dense no-caps')
-                            if is_active:
-                                button.props('color=primary')
-                            else:
-                                button.props('flat color=grey-7')
+            with ui.card().classes(UIClasses.EMOJI_CARD):
+                with ui.column().classes(UIClasses.EMOJI_COLUMN_IN_CARD):
+                    with ui.row().classes(UIClasses.CATEGORY_ROW):
+                        for category_name in sorted(categories.keys()):
+                            normalized_category_name: str = category_name
+                            self._create_category_button(normalized_category_name, normalized_category_name == self._selected_category)
 
-                    with ui.scroll_area().classes('w-full flex-1 min-h-0 border border-[#2a2a2a] rounded-md p-1').style('height: 100%;'):
-                        with ui.row().classes('w-full justify-start items-start content-start gap-1 flex-wrap'):
+                    with ui.scroll_area().classes(UIClasses.EMOJI_SCROLL_AREA):
+                        with ui.row().classes(UIClasses.EMOJI_BUTTON_ROW):
                             for emoji in current_emojis:
                                 self._create_emoji_button(emoji)
 
@@ -66,50 +62,70 @@ class EmojiGridSection:
             )
         except Exception as exc:
             logger.exception('EmojiGridSection render failed: %s', exc)
-            with ui.card().classes('w-full h-full bg-[#1e1e1e] border border-red-700 items-center justify-center'):
-                ui.label('Keyboard failed to render').classes('text-red-400')
+            with ui.card().classes(UIClasses.EMOJI_ERROR_CARD):
+                ui.label(UIContent.EMOJI_GRID_ERROR_LABEL).classes(UIClasses.ERROR_TEXT)
 
-    def _ensure_selected_category(self, categories: OrderedDict[str, list[EmojiData]]) -> None:
+    def _ensure_selected_category(self, categories: OrderedDict[str, list[EmojiData]]) -> str:
         if not categories:
-            self._selected_category = None
             logger.warning('EmojiGridSection _ensure_selected_category found no categories')
-            return
+            return UIContent.UNKNOWN_CATEGORY
 
-        if self._selected_category in categories:
-            logger.info('EmojiGridSection keeping selected category=%s', self._selected_category)
-            return
-
-        preferred_categories = [name for name in categories if name != 'Unknown']
-        if preferred_categories:
-            self._selected_category = max(preferred_categories, key=lambda name: len(categories[name]))
-        else:
-            self._selected_category = max(categories.keys(), key=lambda name: len(categories[name]))
         selected_category = self._selected_category
+        if selected_category and selected_category in categories:
+            logger.info('EmojiGridSection keeping selected category=%s', selected_category)
+            return selected_category
+
+        preferred_categories = [name for name in categories if name != UIContent.UNKNOWN_CATEGORY]
+        if preferred_categories:
+            selected_category = max(preferred_categories, key=lambda name: len(categories[name]))
+        else:
+            selected_category = max(categories.keys(), key=lambda name: len(categories[name]))
         logger.info('EmojiGridSection selected default category=%s size=%d', selected_category, len(categories[selected_category]))
+        return selected_category
 
     def _select_category(self, category_name: str) -> None:
-        if category_name == self._selected_category:
-            logger.info('EmojiGridSection category click ignored because already selected: %s', category_name)
+        selected_category = self._selected_category or UIContent.UNKNOWN_CATEGORY
+        if category_name == selected_category:
             return
 
-        logger.info('EmojiGridSection category changed from %s to %s', self._selected_category, category_name)
         self._selected_category = category_name
         self.render.refresh()
 
+    def _create_category_button(self, category_name: str, is_active: bool) -> None:
+        button = ui.button(category_name, on_click=lambda: self._select_category(category_name)).props(UIProps.EMOJI_CATEGORY_BUTTON)
+        if is_active:
+            button.props(UIProps.EMOJI_CATEGORY_ACTIVE_BUTTON)
+        else:
+            button.props(UIProps.EMOJI_CATEGORY_INACTIVE_BUTTON)
+
     @staticmethod
     def _group_by_category(emojis: tuple[EmojiData, ...]) -> OrderedDict[str, list[EmojiData]]:
-        grouped: OrderedDict[str, list[EmojiData]] = OrderedDict()
-        sorted_emojis = sorted(emojis, key=lambda value: (value.category, value.keyboard_position, value.name))
+        grouped: OrderedDict[str, list[EmojiData]] = {}
+        sorted_emojis = sorted(emojis, key=EmojiGridSection._sort_emoji_key)
         for emoji in sorted_emojis:
-            category_name = emoji.category or 'Unknown'
-            grouped.setdefault(category_name, []).append(emoji)
+            category_name = EmojiGridSection._normalize_category_name(emoji.category)
+            if category_name not in grouped:
+                grouped[category_name] = []
+            grouped[category_name].append(emoji)
         return grouped
+
+    @staticmethod
+    def _sort_emoji_key(emoji: EmojiData) -> tuple[str, int, str]:
+        return (
+            EmojiGridSection._normalize_category_name(emoji.category),
+            emoji.keyboard_position,
+            emoji.name,
+        )
+
+    @staticmethod
+    def _normalize_category_name(category_name: str | None) -> str:
+        return UIContent.UNKNOWN_CATEGORY if category_name is None else category_name
 
     def _create_emoji_button(self, emoji: EmojiData):
         ui.button(
             emoji.character,
             on_click=lambda selected=emoji: self._on_emoji_selected(selected)
-        ).props('flat').classes('text-2xl p-1 rounded-lg hover:bg-white/10 w-10 h-10')
+        ).props(UIProps.EMOJI_PICKER_BUTTON).classes(UIClasses.EMOJI_BUTTON)
 
     def _on_emoji_selected(self, emoji: EmojiData):
         logger.info('Emoji selected: category=%s codepoint=%s name=%s', emoji.category, emoji.codepoint, emoji.name)
