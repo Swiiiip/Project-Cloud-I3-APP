@@ -5,9 +5,9 @@ from datetime import date
 from src.config import Config
 from src.core.emoji.dto.combination_data import CombinationData
 from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple, EmojiDataCouple
-from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.gameplay.dto.challenge_answer import ChallengeAnswer
 from src.core.gameplay.dto.challenge_state import ChallengeState
+from src.core.gameplay.dto.guess_slot_match import GuessSlotMatch
 from src.core.service.emoji_kitchen import EmojiKitchenService
 from src.persistence.abstract_challenge_storage import AbstractChallengeStorage
 
@@ -36,14 +36,18 @@ class DailyChallengeService:
                                    attempts=0,
                                    max_attempts=Config.DAILY_CHALLENGE_MAX_GUESSES,
                                    is_completed=False,
-                                   past_guesses=())
+                                   past_guesses=(),
+                                   past_guess_matches=())
             self._storage.save_state(user_id, state)
             logger.info(f"Created new session for {user_id}")
 
+        if len(state.past_guess_matches) != len(state.past_guesses):
+            state = self._with_backfilled_guess_matches(state)
+            self._storage.save_state(user_id, state)
+            logger.info("Backfilled guess match metadata for %s", user_id)
+
         return state
 
-    def get_supported_emojis(self) -> tuple[EmojiData, ...]:
-        return self._emoji_service.fetch_all_supported_emoji_metadata()
 
     def process_guess(self, user_id: str, codepoint_couple_guess: EmojiCodepointCouple) -> ChallengeState:
         state = self.get_user_state(user_id)
@@ -55,14 +59,54 @@ class DailyChallengeService:
         logger.info(f"User '{user_id}' made a guess with codepoints: {codepoint_couple_guess}. Attempts: {state.attempts}/{state.max_attempts}. Guess correct: {is_correct_guess}")
         emoji_couple_guess = EmojiDataCouple(first_emoji=self._emoji_service.fetch_emoji_by_codepoint(codepoint_couple_guess.first_emoji_codepoint),
                                              second_emoji=self._emoji_service.fetch_emoji_by_codepoint(codepoint_couple_guess.second_emoji_codepoint))
+        guess_match = self._build_guess_slot_match(state.answer.emoji_codepoint_couple, codepoint_couple_guess)
         new_state = ChallengeState(answer=state.answer,
                                    attempts=state.attempts + 1,
                                    max_attempts=state.max_attempts,
                                    is_completed=is_correct_guess,
                                    past_guesses=tuple([*state.past_guesses,
-                                                       emoji_couple_guess]))
+                                                       emoji_couple_guess]),
+                                   past_guess_matches=tuple([*state.past_guess_matches,
+                                                            guess_match]))
         self._storage.save_state(user_id, new_state)
         return new_state
+
+    @staticmethod
+    def _build_guess_slot_match(answer: EmojiCodepointCouple, guess: EmojiCodepointCouple) -> GuessSlotMatch:
+        answer_remaining: dict[str, int] = {}
+        for answer_codepoint in (answer.first_emoji_codepoint, answer.second_emoji_codepoint):
+            answer_remaining[answer_codepoint] = answer_remaining.get(answer_codepoint, 0) + 1
+
+        slot_matches: list[bool] = []
+        for guess_codepoint in (guess.first_emoji_codepoint, guess.second_emoji_codepoint):
+            available = answer_remaining.get(guess_codepoint, 0)
+            is_match = available > 0
+            slot_matches.append(is_match)
+            if is_match:
+                answer_remaining[guess_codepoint] = available - 1
+
+        return GuessSlotMatch(first_slot_match=slot_matches[0], second_slot_match=slot_matches[1])
+
+    @staticmethod
+    def _with_backfilled_guess_matches(state: ChallengeState) -> ChallengeState:
+        computed_matches = tuple(
+            DailyChallengeService._build_guess_slot_match(
+                state.answer.emoji_codepoint_couple,
+                EmojiCodepointCouple(
+                    first_emoji_codepoint=guess.first_emoji.codepoint,
+                    second_emoji_codepoint=guess.second_emoji.codepoint,
+                ),
+            )
+            for guess in state.past_guesses
+        )
+        return ChallengeState(
+            answer=state.answer,
+            attempts=state.attempts,
+            max_attempts=state.max_attempts,
+            is_completed=state.is_completed,
+            past_guesses=state.past_guesses,
+            past_guess_matches=computed_matches,
+        )
 
     def _pick_daily_combination(self) -> CombinationData:
         emojis = self._emoji_service.fetch_all_supported_emoji_codepoints()

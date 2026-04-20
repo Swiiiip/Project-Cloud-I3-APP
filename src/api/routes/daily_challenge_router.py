@@ -8,6 +8,8 @@ from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple
 from src.core.gameplay.image_blur_processor import ImageBlurProcessingService
 from src.core.service.daily_challenge import DailyChallengeService
 from src.core.service.emoji_kitchen import EmojiKitchenService
+
+
 class DailyChallengeRouter:
     def __init__(self, game_service: DailyChallengeService, image_service: ImageBlurProcessingService,
                  emoji_service: EmojiKitchenService, session_resolver: AbstractSessionResolver):
@@ -25,8 +27,8 @@ class DailyChallengeRouter:
         return state.model_dump()
 
     async def get_supported_emojis(self):
-        emojis = self.game_service.get_supported_emojis()
-        return {"emojis": [emoji.to_dict() for emoji in emojis]}
+        categories = self.emoji_service.fetch_grouped_supported_emoji_metadata()
+        return {"categories": [category.to_dict() for category in categories]}
 
     async def submit_guess(self,
                            request: Request,

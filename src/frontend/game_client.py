@@ -7,7 +7,7 @@ from PIL.Image import Image, open
 
 from src.config import Config
 from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple
-from src.core.emoji.dto.emoji_data import EmojiData
+from src.core.emoji.dto.emoji_category_data import EmojiCategoryData
 from src.core.gameplay.dto.challenge_state import ChallengeState
 
 logger = logging.getLogger(__name__)
@@ -37,11 +37,11 @@ class GameClient:
         response = self._session.get(url, timeout=Config.REQUEST_TIMEOUT_SECONDS)
         return ChallengeState.model_validate(response.json())
 
-    def get_supported_emojis(self) -> Tuple[EmojiData, ...]:
+    def get_supported_emojis(self) -> Tuple[EmojiCategoryData, ...]:
         url = f"{self._base_url}/api/v1/daily/supported_emojis"
         response = self._session.get(url, timeout=Config.REQUEST_TIMEOUT_SECONDS)
-        data = response.json().get("emojis", [])
-        return tuple(EmojiData.from_dict(raw_emoji) for raw_emoji in data)
+        data = response.json().get("categories", [])
+        return tuple(EmojiCategoryData.from_dict(raw_category) for raw_category in data)
 
     def get_rendered_image(self) -> Image:
         url = f"{self._base_url}/api/v1/daily/render"

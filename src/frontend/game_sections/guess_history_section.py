@@ -5,7 +5,7 @@ from nicegui import run, ui
 
 from src.core.emoji.dto.emoji_couple import EmojiDataCouple
 from src.core.gameplay.dto.challenge_state import ChallengeState
-from src.frontend.ui_constants import UIClasses, UIColors, UIContent, UIIcons, UIProps, format_attempts_label, format_guess_pair
+from src.frontend.ui_constants import UIClasses, UIColors, UIContent, UIIcons, UIProps, format_guess_pair
 from src.frontend.view_model import BlurmojiViewModel
 
 logger = logging.getLogger(__name__)
@@ -26,10 +26,12 @@ class GuessHistorySection:
             return
 
         with ui.column().classes(UIClasses.WORKBENCH_CONTAINER):
-            self._render_workbench()
+            self._render_workbench(state)
             self._render_history(state)
+            self._render_communication_block(state)
 
-    def _render_workbench(self):
+    def _render_workbench(self, state: ChallengeState):
+        is_game_over = state.is_completed or (state.attempts >= state.max_attempts and not state.is_completed)
         with ui.card().classes(UIClasses.WORKBENCH_CARD):
             with ui.row().classes(UIClasses.WORKBENCH_ROW):
                 with ui.row().classes(UIClasses.SLOT_ROW):
@@ -38,36 +40,99 @@ class GuessHistorySection:
                 with ui.row().classes(UIClasses.SLOT_ROW):
                     submit_button = ui.button(icon=UIIcons.SUBMIT, on_click=self._submit_guess).props(UIProps.ROUND_BUTTON)
                     submit_button.bind_enabled_from(self._view_model, 'can_submit')
+                    submit_button.enabled = submit_button.enabled and not is_game_over
                     submit_button.bind_background_color_from(
                         self._view_model,
                         'can_submit',
-                        lambda can_submit: UIColors.SUBMIT_ENABLED if can_submit else UIColors.SUBMIT_DISABLED,
+                        lambda can_submit: UIColors.SUBMIT_ENABLED if can_submit and not is_game_over else UIColors.SUBMIT_DISABLED,
                     )
                     ui.button(icon=UIIcons.RESET, on_click=self._reset_selection).props(UIProps.DELETE_BUTTON)
 
         logger.info('Rendered workbench with current selections %s and %s', self._view_model.char_1, self._view_model.char_2)
 
-    @staticmethod
-    def _render_history(state: ChallengeState):
+    def _render_history(self, state: ChallengeState):
         attempts_history = state.past_guesses
         with ui.card().classes(UIClasses.HISTORY_CARD):
             with ui.column().classes(UIClasses.HISTORY_SCROLL):
-                ui.label(format_attempts_label(state.attempts, state.max_attempts)).classes(UIClasses.ATTEMPTS_META)
                 for index in range(state.max_attempts):
                     with ui.row().classes(UIClasses.ATTEMPT_ROW):
                         if index < len(attempts_history):
                             guessed_emoji_couple: EmojiDataCouple = attempts_history[index]
-                            ui.label(
-                                format_guess_pair(
-                                    guessed_emoji_couple.first_emoji.character,
-                                    guessed_emoji_couple.second_emoji.character,
-                                )
-                            ).classes(UIClasses.ATTEMPT_GUESS)
-                            ui.icon(UIIcons.FAILED_ATTEMPT, color=UIColors.ERROR_ICON).classes(UIClasses.ATTEMPT_ICON)
+                            first_class, second_class = self._emoji_slot_classes(state, guessed_emoji_couple)
+                            with ui.row().classes(UIClasses.ATTEMPT_PAIR):
+                                ui.label(guessed_emoji_couple.first_emoji.character).classes(first_class)
+                                ui.label(guessed_emoji_couple.second_emoji.character).classes(second_class)
                         else:
-                            ui.label(UIContent.EMPTY_ATTEMPT_LABEL).classes(UIClasses.ATTEMPT_EMPTY)
+                            with ui.row().classes(UIClasses.ATTEMPT_PAIR):
+                                ui.label("").classes(UIClasses.ATTEMPT_EMPTY)
+                                ui.label("").classes(UIClasses.ATTEMPT_EMPTY)
 
         logger.info('Rendered history with %d entries', len(attempts_history))
+
+    def _render_communication_block(self, state: ChallengeState):
+        with ui.card().classes(UIClasses.COMMUNICATION_CARD):
+            if self._is_success(state):
+                ui.label(UIContent.SUCCESS_MESSAGE).classes(UIClasses.COMMUNICATION_SUCCESS)
+                ui.label(UIContent.CHALLENGE_NAME_TEMPLATE.format(name=state.answer.name)).classes(UIClasses.COMMUNICATION_TEXT)
+                return
+
+            if self._is_failure(state):
+                first_emoji, second_emoji = self._resolve_answer_characters(state)
+                ui.label(format_guess_pair(first_emoji, second_emoji)).classes(UIClasses.COMMUNICATION_TEXT)
+                ui.label(UIContent.FAILURE_MESSAGE).classes(UIClasses.COMMUNICATION_FAILURE)
+                ui.label(UIContent.CHALLENGE_NAME_TEMPLATE.format(name=state.answer.name)).classes(UIClasses.COMMUNICATION_TEXT)
+                return
+
+            ui.label(' ').classes(UIClasses.COMMUNICATION_PLACEHOLDER)
+
+    @staticmethod
+    def _is_success(state: ChallengeState) -> bool:
+        return state.is_completed
+
+    @staticmethod
+    def _is_failure(state: ChallengeState) -> bool:
+        return state.attempts >= state.max_attempts and not state.is_completed
+
+    @staticmethod
+    def _emoji_slot_classes(state: ChallengeState, guessed_emoji_couple: EmojiDataCouple) -> tuple[str, str]:
+        answer = state.answer.emoji_codepoint_couple
+        answer_remaining: dict[str, int] = {}
+        for answer_codepoint in (answer.first_emoji_codepoint, answer.second_emoji_codepoint):
+            answer_remaining[answer_codepoint] = answer_remaining.get(answer_codepoint, 0) + 1
+
+        slot_classes: list[str] = []
+        for guessed_codepoint in (
+            guessed_emoji_couple.first_emoji.codepoint,
+            guessed_emoji_couple.second_emoji.codepoint,
+        ):
+            available = answer_remaining.get(guessed_codepoint, 0)
+            if available > 0:
+                slot_classes.append(UIClasses.ATTEMPT_GUESS_CORRECT)
+                answer_remaining[guessed_codepoint] = available - 1
+            else:
+                slot_classes.append(UIClasses.ATTEMPT_GUESS_INCORRECT)
+
+        return slot_classes[0], slot_classes[1]
+
+    def _resolve_answer_characters(self, state: ChallengeState) -> tuple[str, str]:
+        answer = state.answer.emoji_codepoint_couple
+        return (
+            self._resolve_emoji_character(answer.first_emoji_codepoint),
+            self._resolve_emoji_character(answer.second_emoji_codepoint),
+        )
+
+    def _resolve_emoji_character(self, target_codepoint: str) -> str:
+        for category in self._view_model.emoji_pool:
+            for emoji in category.emojis:
+                if emoji.codepoint == target_codepoint:
+                    return emoji.character
+
+        normalized_codepoint = target_codepoint.lower().removeprefix('u')
+        try:
+            return ''.join(chr(int(part, 16)) for part in normalized_codepoint.split('-'))
+        except ValueError:
+            logger.warning('Could not resolve emoji character for codepoint=%s', target_codepoint)
+            return target_codepoint
 
     async def _submit_guess(self):
         logger.info('Submitting guess from GuessHistorySection')

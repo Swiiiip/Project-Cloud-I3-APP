@@ -5,6 +5,7 @@ from typing import Optional
 from PIL.Image import Image
 
 from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple
+from src.core.emoji.dto.emoji_category_data import EmojiCategoryData
 from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.gameplay.dto.challenge_state import ChallengeState
 from src.frontend.game_client import GameClient
@@ -20,7 +21,7 @@ class BlurmojiViewModel:
         self._client = client
         self._initial_data_lock = asyncio.Lock()
         self._state: Optional[ChallengeState] = None
-        self._emoji_pool: tuple[EmojiData, ...] = ()
+        self._emoji_pool: tuple[EmojiCategoryData, ...] = ()
         self._rendered_image: Optional[Image] = None
         self._char_1 = self._default_unselected_char
         self._char_2 = self._default_unselected_char
@@ -33,7 +34,7 @@ class BlurmojiViewModel:
         return self._state
 
     @property
-    def emoji_pool(self) -> tuple[EmojiData, ...]:
+    def emoji_pool(self) -> tuple[EmojiCategoryData, ...]:
         return self._emoji_pool
 
     @property
