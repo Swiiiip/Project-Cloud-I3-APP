@@ -14,6 +14,7 @@ class BlurmojiApiBootstrapper:
     def __init__(self):
         self._app = FastAPI(title="Blurmoji API")
 
+    def build(self) -> FastAPI:
         repo = FileEmojiRepository(PathHandler.root_dir() / "emojis.json")
         emoji_kitchen_service = EmojiKitchenService(repo)
         challenge_repository = ChallengeStorageFactory.create(PathHandler.root_dir())
@@ -21,9 +22,10 @@ class BlurmojiApiBootstrapper:
         image_blur_processor = ImageBlurProcessingService()
         session_resolver = CookieSessionResolver()
 
-        self._daily_router = DailyChallengeRouter(game_service, image_blur_processor, emoji_kitchen_service, session_resolver)
-        self._setup_routes()
+        daily_router = DailyChallengeRouter(game_service,
+                                            image_blur_processor,
+                                            emoji_kitchen_service,
+                                            session_resolver)
+        self._app.include_router(daily_router.router)
 
-
-    def _setup_routes(self):
-        self._app.include_router(self._daily_router.router)
+        return self._app

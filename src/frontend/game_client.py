@@ -46,28 +46,3 @@ class GameClient:
         url = f"{self._base_url}/api/v1/daily/render"
         response = self._session.get(url, timeout=Config.REQUEST_TIMEOUT_SECONDS)
         return open(io.BytesIO(response.content))
-
-
-if __name__ == '__main__':
-    from src.utils.logger_coonfigurator import LoggerConfigurator
-    from src.utils.path_handler import PathHandler
-    from dotenv import load_dotenv
-    import os
-
-    LoggerConfigurator.config_logger()
-    load_dotenv(dotenv_path=PathHandler.dot_env(), override=False)
-
-    client = GameClient(os.environ["API_BASE_URL"])
-    client.create_daily_challenge()
-    rendered_image_object = client.get_rendered_image()
-    rendered_image_object.save("INITIAL-rendered_image.png")
-    print(client.get_status())
-    print(f"Session Cookie: {client._session.cookies.get_dict()}")
-
-    couple_guess = EmojiCodepointCouple("1f3d1", "1f365")
-    print(client.make_guess(couple_guess))
-    print(client.get_status())
-    print(f"Session Cookie: {client._session.cookies.get_dict()}")
-
-    rendered_image_object = client.get_rendered_image()
-    rendered_image_object.save("GUESS1-rendered_image.png")

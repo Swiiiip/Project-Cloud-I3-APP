@@ -45,17 +45,3 @@ class ImageBlurProcessingService:
         )
         pixelated = small.resize(img.size, Resampling.NEAREST)
         return pixelated.filter(ImageFilter.GaussianBlur(radius=blur_radius))
-
-
-if __name__ == '__main__':
-    from src.utils.logger_coonfigurator import LoggerConfigurator
-    from src.utils.path_handler import PathHandler
-    LoggerConfigurator.config_logger()
-
-    image_url = r"https://www.gstatic.com/android/keyboard/emojikitchen/20201001/u2665-ufe0f/u2665-ufe0f_u2615.png"
-    service = ImageBlurProcessingService()
-    for attempt in range(5):
-        image = service.get_processed_image(image_url, attempt)
-        processed_image = PathHandler.src_dir / f"blurred_image_{attempt}.png"
-        with processed_image.open("wb") as f:
-            image.save(f)

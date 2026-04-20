@@ -147,24 +147,3 @@ class DailyChallengeService:
                 logger.info(f"Daily emoji couple to guess : {combination.emoji_couple}")
                 return combination
         raise ValueError(f"No combination could be found after {self._max_combination_retries} retries.")
-
-
-if __name__ == '__main__':
-    from src.utils.logger_coonfigurator import LoggerConfigurator
-    from src.utils.path_handler import PathHandler
-    from src.persistence.file_emoji_repository import FileEmojiRepository
-    from src.persistence.file_challenge_storage import FileChallengeStorage
-
-    LoggerConfigurator.config_logger()
-    emoji_repository = FileEmojiRepository(PathHandler.src_dir / "emojis.json")
-    challenge_repository = FileChallengeStorage(PathHandler.src_dir / "daily.json")
-    with emoji_repository as repo:
-        emoji_service = EmojiKitchenService(repo)
-        game_service = DailyChallengeService(emoji_service, challenge_repository)
-
-        user_id = "test_user"
-        state = game_service.get_user_state(user_id)
-        print(state)
-        couple_guess = EmojiCodepointCouple("1f9c2", "231b")
-        guess_state = game_service.process_guess(user_id, couple_guess)
-        print(guess_state)

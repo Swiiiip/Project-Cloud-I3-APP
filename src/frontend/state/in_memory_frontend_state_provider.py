@@ -20,5 +20,3 @@ class InMemoryFrontendStateProvider(AbstractFrontendStateProvider):
                 self._state = FrontendSessionState(client=client, view_model=view_model)
             state = self._state
         return state
-
-

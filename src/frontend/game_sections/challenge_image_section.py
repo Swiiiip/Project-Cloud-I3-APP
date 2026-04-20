@@ -3,7 +3,7 @@ from datetime import date
 
 from nicegui import ui
 
-from src.frontend.ui_constants import UIClasses, UIContent, format_daily_challenge_label
+from src.frontend.ui_constants import UIClasses, format_daily_challenge_label
 from src.frontend.view_model import BlurmojiViewModel
 
 logger = logging.getLogger(__name__)
