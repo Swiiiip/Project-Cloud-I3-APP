@@ -7,7 +7,7 @@ from src.core.emoji.dto.emoji_couple import EmojiDataCouple
 from src.core.emoji.dto.emoji_category_data import EmojiCategoryData
 from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.emoji.emoji_data_populator import EmojiDataPopulator
-from src.persistence.abstract_emoji_repository import AbstractEmojiRepository
+from src.persistence.emoji_repository.abstract_emoji_repository import AbstractEmojiRepository
 
 logger = logging.getLogger(__name__)
 

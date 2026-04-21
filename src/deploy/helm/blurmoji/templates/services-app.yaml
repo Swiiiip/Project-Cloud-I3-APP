@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-gateway
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: {{ include "blurmoji.fullname" . }}-gateway
+  ports:
+    - port: {{ .Values.servicePorts.gateway }}
+      targetPort: {{ .Values.servicePorts.gateway }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-game
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: {{ include "blurmoji.fullname" . }}-game
+  ports:
+    - port: {{ .Values.servicePorts.game }}
+      targetPort: {{ .Values.servicePorts.game }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-catalog
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: {{ include "blurmoji.fullname" . }}-catalog
+  ports:
+    - port: {{ .Values.servicePorts.catalog }}
+      targetPort: {{ .Values.servicePorts.catalog }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-render
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: {{ include "blurmoji.fullname" . }}-render
+  ports:
+    - port: {{ .Values.servicePorts.render }}
+      targetPort: {{ .Values.servicePorts.render }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-frontend
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: {{ include "blurmoji.fullname" . }}-frontend
+  ports:
+    - port: {{ .Values.servicePorts.frontend }}
+      targetPort: {{ .Values.servicePorts.frontend }}
+

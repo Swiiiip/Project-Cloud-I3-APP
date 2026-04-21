@@ -1,0 +1,34 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-ingress
+  namespace: {{ .Values.global.namespace }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tlsSecretName }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host }}
+      secretName: {{ .Values.ingress.tlsSecretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "blurmoji.fullname" . }}-gateway
+                port:
+                  number: {{ .Values.servicePorts.gateway }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "blurmoji.fullname" . }}-frontend
+                port:
+                  number: {{ .Values.servicePorts.frontend }}
+{{- end }}
+

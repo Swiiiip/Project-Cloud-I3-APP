@@ -9,7 +9,7 @@ from src.core.emoji.dto.combination_data import CombinationData
 from src.core.emoji.dto.emoji_couple import EmojiDataCouple
 from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.emoji.dto.unit_data import UnitData
-from src.persistence.abstract_emoji_repository import AbstractEmojiRepository
+from src.persistence.emoji_repository.abstract_emoji_repository import AbstractEmojiRepository
 
 logger = logging.getLogger(__name__)
 UNKNOWN_TAXONOMY_LABEL = "Unknown"

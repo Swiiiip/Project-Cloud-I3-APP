@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-redis
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "blurmoji.fullname" . }}-redis
+  template:
+    metadata:
+      labels:
+        app: {{ include "blurmoji.fullname" . }}-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: {{ .Values.servicePorts.redis }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-mysql
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "blurmoji.fullname" . }}-mysql
+  template:
+    metadata:
+      labels:
+        app: {{ include "blurmoji.fullname" . }}-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "blurmoji.fullname" . }}-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              value: blurmoji
+          ports:
+            - containerPort: {{ .Values.servicePorts.mysql }}
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mysql-storage
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: {{ include "blurmoji.fullname" . }}-mysql-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-azurite
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "blurmoji.fullname" . }}-azurite
+  template:
+    metadata:
+      labels:
+        app: {{ include "blurmoji.fullname" . }}-azurite
+    spec:
+      containers:
+        - name: azurite
+          image: mcr.microsoft.com/azure-storage/azurite
+          args: ["azurite", "--blobHost", "0.0.0.0", "--blobPort", "10000"]
+          ports:
+            - containerPort: {{ .Values.servicePorts.azurite }}
+          volumeMounts:
+            - mountPath: /data
+              name: azurite-storage
+      volumes:
+        - name: azurite-storage
+          persistentVolumeClaim:
+            claimName: {{ include "blurmoji.fullname" . }}-azurite-pvc
+

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.frontend.session_state import FrontendSessionState
+from src.frontend.state.session_state import FrontendSessionState
 
 
 class AbstractFrontendStateProvider(ABC):

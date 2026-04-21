@@ -3,12 +3,12 @@ import os
 from dotenv import load_dotenv
 from nicegui import ui
 from nicegui.events import KeyEventArguments
-from src.frontend.game_sections import ChallengeImageSection, EmojiGridSection, GuessHistorySection
-from src.frontend.game_view import BlurmojiView
-from src.frontend.session_state import FrontendSessionState
+from src.frontend.view.game_sections import ChallengeImageSection, EmojiGridSection, GuessHistorySection
+from src.frontend.view.game_view import BlurmojiView
+from src.frontend.state.session_state import FrontendSessionState
 from src.frontend.state.abstract_frontend_state_provider import AbstractFrontendStateProvider
 from src.frontend.state.in_memory_frontend_state_provider import InMemoryFrontendStateProvider
-from src.frontend.ui_constants import UIClasses, UIColors, UIContent
+from src.frontend.view.ui_constants import UIClasses, UIColors, UIContent
 from src.utils.logger_coonfigurator import LoggerConfigurator
 from src.utils.path_handler import PathHandler
 

@@ -1,0 +1,54 @@
+global:
+  namespace: blurmoji
+  imagePullPolicy: IfNotPresent
+
+images:
+  gateway: blurmoji/gateway:latest
+  game: blurmoji/game:latest
+  catalog: blurmoji/catalog:latest
+  render: blurmoji/render:latest
+  frontend: blurmoji/frontend:latest
+
+servicePorts:
+  gateway: 8000
+  game: 8010
+  catalog: 8020
+  render: 8030
+  frontend: 8001
+  redis: 6379
+  mysql: 3306
+  azurite: 10000
+
+replicas:
+  gateway: 1
+  game: 1
+  catalog: 1
+  render: 1
+  frontend: 1
+
+ingress:
+  enabled: true
+  className: nginx
+  host: blurmoji.local
+  tlsSecretName: ""
+
+persistence:
+  mysqlSize: 5Gi
+  azuriteSize: 5Gi
+
+config:
+  internalHttpTimeoutSeconds: "30"
+  challengeStorageBackend: redis
+  redisDb: "0"
+  redisTtlSeconds: "172800"
+
+secrets:
+  sessionCookieSecret: change-me
+  mysqlRootPassword: change-me
+
+cron:
+  precompute:
+    schedule: "0 0 * * *"
+  emojiSync:
+    schedule: "0 */12 * * *"
+

@@ -1,0 +1,18 @@
+global:
+  imagePullPolicy: Always
+
+replicas:
+  gateway: 3
+  game: 2
+  catalog: 2
+  render: 2
+  frontend: 2
+
+ingress:
+  host: blurmoji.example.com
+  tlsSecretName: blurmoji-tls
+
+secrets:
+  sessionCookieSecret: replace-in-cluster
+  mysqlRootPassword: replace-in-cluster
+

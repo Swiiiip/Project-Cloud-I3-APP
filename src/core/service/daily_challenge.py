@@ -10,7 +10,7 @@ from src.core.gameplay.dto.challenge_answer import ChallengeAnswer
 from src.core.gameplay.dto.challenge_state import ChallengeState
 from src.core.gameplay.dto.guess_slot_match import GuessSlotMatch
 from src.core.service.emoji_kitchen import EmojiKitchenService
-from src.persistence.abstract_challenge_storage import AbstractChallengeStorage
+from src.persistence.challenge_storage.abstract_challenge_storage import AbstractChallengeStorage
 
 logger = logging.Logger(__name__)
 

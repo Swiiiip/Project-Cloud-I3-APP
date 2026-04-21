@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-daily-precompute
+  namespace: {{ .Values.global.namespace }}
+spec:
+  schedule: {{ .Values.cron.precompute.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: precompute
+              image: curlimages/curl:8.11.1
+              args:
+                - /bin/sh
+                - -c
+                - curl -fsS "http://{{ include \"blurmoji.fullname\" . }}-game:{{ .Values.servicePorts.game }}/internal/game/start?session_id=cron-precompute"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-emoji-sync
+  namespace: {{ .Values.global.namespace }}
+spec:
+  schedule: {{ .Values.cron.emojiSync.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: emoji-sync
+              image: curlimages/curl:8.11.1
+              args:
+                - /bin/sh
+                - -c
+                - curl -fsS "http://{{ include \"blurmoji.fullname\" . }}-catalog:{{ .Values.servicePorts.catalog }}/internal/catalog/supported_emojis" > /dev/null
+

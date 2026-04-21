@@ -1,9 +1,9 @@
 import threading
 
 from src.frontend.game_client import GameClient
-from src.frontend.session_state import FrontendSessionState
+from src.frontend.state.session_state import FrontendSessionState
 from src.frontend.state.abstract_frontend_state_provider import AbstractFrontendStateProvider
-from src.frontend.view_model import BlurmojiViewModel
+from src.frontend.view.view_model import BlurmojiViewModel
 
 
 class InMemoryFrontendStateProvider(AbstractFrontendStateProvider):

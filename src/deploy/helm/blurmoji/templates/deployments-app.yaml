@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-gateway
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.replicas.gateway }}
+  selector:
+    matchLabels:
+      app: {{ include "blurmoji.fullname" . }}-gateway
+  template:
+    metadata:
+      labels:
+        app: {{ include "blurmoji.fullname" . }}-gateway
+    spec:
+      containers:
+        - name: gateway
+          image: {{ .Values.images.gateway }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "blurmoji.fullname" . }}-config
+            - secretRef:
+                name: {{ include "blurmoji.fullname" . }}-secret
+          ports:
+            - containerPort: {{ .Values.servicePorts.gateway }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-game
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.replicas.game }}
+  selector:
+    matchLabels:
+      app: {{ include "blurmoji.fullname" . }}-game
+  template:
+    metadata:
+      labels:
+        app: {{ include "blurmoji.fullname" . }}-game
+    spec:
+      containers:
+        - name: game
+          image: {{ .Values.images.game }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "blurmoji.fullname" . }}-config
+          ports:
+            - containerPort: {{ .Values.servicePorts.game }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-catalog
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.replicas.catalog }}
+  selector:
+    matchLabels:
+      app: {{ include "blurmoji.fullname" . }}-catalog
+  template:
+    metadata:
+      labels:
+        app: {{ include "blurmoji.fullname" . }}-catalog
+    spec:
+      containers:
+        - name: catalog
+          image: {{ .Values.images.catalog }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "blurmoji.fullname" . }}-config
+          ports:
+            - containerPort: {{ .Values.servicePorts.catalog }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-render
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.replicas.render }}
+  selector:
+    matchLabels:
+      app: {{ include "blurmoji.fullname" . }}-render
+  template:
+    metadata:
+      labels:
+        app: {{ include "blurmoji.fullname" . }}-render
+    spec:
+      containers:
+        - name: render
+          image: {{ .Values.images.render }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "blurmoji.fullname" . }}-config
+          ports:
+            - containerPort: {{ .Values.servicePorts.render }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-frontend
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.replicas.frontend }}
+  selector:
+    matchLabels:
+      app: {{ include "blurmoji.fullname" . }}-frontend
+  template:
+    metadata:
+      labels:
+        app: {{ include "blurmoji.fullname" . }}-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: {{ .Values.images.frontend }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "blurmoji.fullname" . }}-config
+          ports:
+            - containerPort: {{ .Values.servicePorts.frontend }}
+
