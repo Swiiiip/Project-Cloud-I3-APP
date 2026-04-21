@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: blurmoji-smoke-queue-delay
+  namespace: blurmoji
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: smoke-queue-delay
+          image: blurmoji/tests:latest
+          command: ["python", "-m", "src.tests.smoke.run_suite", "--scenario", "queue_delay"]
+          envFrom:
+            - configMapRef:
+                name: blurmoji-smoke-config
+

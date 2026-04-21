@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Query
 
-from src.common.contracts.game_contracts import GameGuessRequest
+from src.services.game.game_contracts import GameGuessRequest
 from src.core.service.daily_challenge import DailyChallengeService
 from src.core.service.emoji_kitchen import EmojiKitchenService
-from src.persistence.challenge_storage.challenge_storage_factory import ChallengeStorageFactory
-from src.persistence.emoji_repository.file_emoji_repository import FileEmojiRepository
+from src.persistence.challenge_storage_factory import ChallengeStorageFactory
+from src.persistence.file_emoji_repository import FileEmojiRepository
 from src.utils.path_handler import PathHandler
 
 
@@ -46,4 +46,3 @@ class GameServiceApp:
 
 def create_app() -> FastAPI:
     return GameServiceApp().app
-

@@ -1,10 +1,10 @@
 import uvicorn
 from dotenv import load_dotenv
 
-from src.utils.runtime_env import RuntimeEnv
+from src.services.common.runtime_env import RuntimeEnv
 from src.services.gateway.app import create_app
 from src.services.gateway.internal_client import InternalServiceClient
-from src.api.session.signed_cookie_session_resolver import SignedCookieSessionResolver
+from src.services.gateway.session.signed_cookie_session_resolver import SignedCookieSessionResolver
 from src.utils.logger_coonfigurator import LoggerConfigurator
 from src.utils.path_handler import PathHandler
 
@@ -31,4 +31,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

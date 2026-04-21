@@ -1,7 +1,7 @@
 import uvicorn
 from dotenv import load_dotenv
 
-from src.utils.runtime_env import RuntimeEnv
+from src.services.common.runtime_env import RuntimeEnv
 from src.services.emoji_catalog.app import create_app
 from src.utils.logger_coonfigurator import LoggerConfigurator
 from src.utils.path_handler import PathHandler
@@ -20,4 +20,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

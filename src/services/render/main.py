@@ -1,7 +1,7 @@
 import uvicorn
 from dotenv import load_dotenv
 
-from src.utils.runtime_env import RuntimeEnv
+from src.services.common.runtime_env import RuntimeEnv
 from src.services.render.app import create_app
 from src.services.render.game_service_client import GameServiceClient
 from src.utils.logger_coonfigurator import LoggerConfigurator
@@ -25,4 +25,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

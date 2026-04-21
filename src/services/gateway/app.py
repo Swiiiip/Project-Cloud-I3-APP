@@ -4,7 +4,7 @@ from fastapi import Body, Cookie, FastAPI, Request, Response
 
 from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple
 from src.services.gateway.internal_client import InternalServiceClient
-from src.api.session.signed_cookie_session_resolver import SignedCookieSessionResolver
+from src.services.gateway.session.signed_cookie_session_resolver import SignedCookieSessionResolver
 
 
 class GatewayApp:
@@ -73,4 +73,3 @@ class GatewayApp:
 
 def create_app(internal_client: InternalServiceClient, session_resolver: SignedCookieSessionResolver) -> FastAPI:
     return GatewayApp(internal_client, session_resolver).app
-

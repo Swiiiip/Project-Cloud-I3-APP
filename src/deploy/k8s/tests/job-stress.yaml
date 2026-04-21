@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: blurmoji-smoke-stress
+  namespace: blurmoji
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: smoke-stress
+          image: blurmoji/tests:latest
+          command: ["python", "-m", "src.tests.smoke.run_suite", "--scenario", "stress"]
+          envFrom:
+            - configMapRef:
+                name: blurmoji-smoke-config
+

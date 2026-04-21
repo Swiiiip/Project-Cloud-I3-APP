@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from src.core.service.emoji_kitchen import EmojiKitchenService
-from src.persistence.emoji_repository.file_emoji_repository import FileEmojiRepository
+from src.persistence.file_emoji_repository import FileEmojiRepository
 from src.utils.path_handler import PathHandler
 
 
@@ -31,4 +31,3 @@ class EmojiCatalogServiceApp:
 
 def create_app() -> FastAPI:
     return EmojiCatalogServiceApp().app
-
