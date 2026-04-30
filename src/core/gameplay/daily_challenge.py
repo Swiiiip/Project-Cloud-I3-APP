@@ -9,7 +9,7 @@ from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple, EmojiDataCoupl
 from src.core.gameplay.dto.challenge_answer import ChallengeAnswer
 from src.core.gameplay.dto.challenge_state import ChallengeState
 from src.core.gameplay.dto.guess_slot_match import GuessSlotMatch
-from src.core.service.emoji_kitchen import EmojiKitchenService
+from src.core.emoji.emoji_kitchen import EmojiKitchenService
 from src.persistence.challenge_storage.abstract_challenge_storage import AbstractChallengeStorage
 
 logger = logging.Logger(__name__)
@@ -115,10 +115,9 @@ class DailyChallengeService:
             (answer.first_emoji_codepoint, answer.second_emoji_codepoint)
         )
 
-    @staticmethod
-    def _with_backfilled_guess_matches(state: ChallengeState) -> ChallengeState:
+    def _with_backfilled_guess_matches(self, state: ChallengeState) -> ChallengeState:
         computed_matches = tuple(
-            DailyChallengeService._build_guess_slot_match(
+            self._build_guess_slot_match(
                 state.answer.emoji_codepoint_couple,
                 EmojiCodepointCouple(
                     first_emoji_codepoint=guess.first_emoji.codepoint,

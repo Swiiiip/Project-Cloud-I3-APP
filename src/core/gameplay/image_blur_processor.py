@@ -1,4 +1,5 @@
 import logging
+import threading
 from io import BytesIO
 
 import requests
@@ -13,6 +14,8 @@ class ImageBlurProcessingService:
     def __init__(self,
                  blur_levels: int):
         self._blur_scale = tuple(linspace(0, blur_levels ** 2, num=blur_levels).round().astype(int).tolist())
+        self._image_bytes_cache: dict[str, bytes] = {}
+        self._image_cache_lock = threading.Lock()
         logger.info("Blur scale set to : %s", self._blur_scale)
 
     def get_processed_image(self, image_url: str, blur_level: int) -> Image:
@@ -25,11 +28,16 @@ class ImageBlurProcessingService:
         logger.info("Fetching original image from %s", image_url)
         return self._fetch_image(image_url)
 
-    @staticmethod
-    def _fetch_image(image_url: str) -> Image:
-        response = requests.get(image_url, timeout=5)
-        response.raise_for_status()
-        return open(BytesIO(response.content)).convert("RGBA")
+    def _fetch_image(self, image_url: str) -> Image:
+        with self._image_cache_lock:
+            cached_content = self._image_bytes_cache.get(image_url)
+            if cached_content is None:
+                response = requests.get(image_url, timeout=5)
+                response.raise_for_status()
+                cached_content = response.content
+                self._image_bytes_cache[image_url] = cached_content
+
+        return open(BytesIO(cached_content)).convert("RGBA")
 
     def _apply_game_effect(self, img: Image, blur_level: int) -> Image:
         try:

@@ -19,34 +19,41 @@ class SmokeConfig:
     stress_max_error_rate: float
     stress_p95_max_seconds: float
     redis_host: str
-    redis_port: int
-    mysql_host: str
-    mysql_port: int
-    azurite_host: str
-    azurite_port: int
+    redis_port: int | None
 
     @staticmethod
     def from_env() -> "SmokeConfig":
-        return SmokeConfig(
-            gateway_base_url=os.getenv("SMOKE_GATEWAY_BASE_URL", "http://localhost:8000").rstrip("/"),
-            frontend_base_url=os.getenv("SMOKE_FRONTEND_BASE_URL", "http://localhost:8001").rstrip("/"),
-            public_base_url=os.getenv("SMOKE_PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/"),
-            game_service_base_url=os.getenv("SMOKE_GAME_SERVICE_BASE_URL", "").rstrip("/"),
-            catalog_service_base_url=os.getenv("SMOKE_CATALOG_SERVICE_BASE_URL", "").rstrip("/"),
-            render_service_base_url=os.getenv("SMOKE_RENDER_SERVICE_BASE_URL", "").rstrip("/"),
-            queue_concurrency=int(os.getenv("SMOKE_QUEUE_CONCURRENCY", "40")),
-            queue_iterations_per_user=int(os.getenv("SMOKE_QUEUE_ITERATIONS_PER_USER", "4")),
-            queue_delay_threshold_seconds=float(os.getenv("SMOKE_QUEUE_DELAY_THRESHOLD_SECONDS", "2.0")),
-            concurrent_session_count=int(os.getenv("SMOKE_CONCURRENT_SESSION_COUNT", "100")),
-            stress_total_requests=int(os.getenv("SMOKE_STRESS_TOTAL_REQUESTS", "500")),
-            stress_concurrency=int(os.getenv("SMOKE_STRESS_CONCURRENCY", "40")),
-            stress_max_error_rate=float(os.getenv("SMOKE_STRESS_MAX_ERROR_RATE", "0.03")),
-            stress_p95_max_seconds=float(os.getenv("SMOKE_STRESS_P95_MAX_SECONDS", "2.0")),
-            redis_host=os.getenv("SMOKE_REDIS_HOST", os.getenv("REDIS_HOST", "localhost")),
-            redis_port=int(os.getenv("SMOKE_REDIS_PORT", os.getenv("REDIS_PORT", "6379"))),
-            mysql_host=os.getenv("SMOKE_MYSQL_HOST", "localhost"),
-            mysql_port=int(os.getenv("SMOKE_MYSQL_PORT", "3306")),
-            azurite_host=os.getenv("SMOKE_AZURITE_HOST", "localhost"),
-            azurite_port=int(os.getenv("SMOKE_AZURITE_PORT", "10000")),
-        )
+        def require_env(key: str) -> str:
+            value = os.getenv(key)
+            if value is None or not value.strip():
+                raise ValueError(f"Missing required smoke test environment variable '{key}'")
+            return value.strip()
 
+        def optional_env(key: str) -> str:
+            value = os.getenv(key)
+            return value.strip() if value and value.strip() else ""
+
+        def optional_int_env(key: str) -> int | None:
+            value = optional_env(key)
+            if not value:
+                return None
+            return int(value)
+
+        return SmokeConfig(
+            gateway_base_url=require_env("SMOKE_GATEWAY_BASE_URL").rstrip("/"),
+            frontend_base_url=require_env("SMOKE_FRONTEND_BASE_URL").rstrip("/"),
+            public_base_url=require_env("SMOKE_PUBLIC_BASE_URL").rstrip("/"),
+            game_service_base_url=optional_env("SMOKE_GAME_SERVICE_BASE_URL").rstrip("/"),
+            catalog_service_base_url=optional_env("SMOKE_CATALOG_SERVICE_BASE_URL").rstrip("/"),
+            render_service_base_url=optional_env("SMOKE_RENDER_SERVICE_BASE_URL").rstrip("/"),
+            queue_concurrency=int(require_env("SMOKE_QUEUE_CONCURRENCY")),
+            queue_iterations_per_user=int(require_env("SMOKE_QUEUE_ITERATIONS_PER_USER")),
+            queue_delay_threshold_seconds=float(require_env("SMOKE_QUEUE_DELAY_THRESHOLD_SECONDS")),
+            concurrent_session_count=int(require_env("SMOKE_CONCURRENT_SESSION_COUNT")),
+            stress_total_requests=int(require_env("SMOKE_STRESS_TOTAL_REQUESTS")),
+            stress_concurrency=int(require_env("SMOKE_STRESS_CONCURRENCY")),
+            stress_max_error_rate=float(require_env("SMOKE_STRESS_MAX_ERROR_RATE")),
+            stress_p95_max_seconds=float(require_env("SMOKE_STRESS_P95_MAX_SECONDS")),
+            redis_host=optional_env("SMOKE_REDIS_HOST"),
+            redis_port=optional_int_env("SMOKE_REDIS_PORT"),
+        )

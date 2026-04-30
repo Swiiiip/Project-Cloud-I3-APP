@@ -1,0 +1,82 @@
+x-env:
+  gateway: &env_gateway
+    API_HOST: 0.0.0.0
+    API_PORT: "8000"
+    HEALTHCHECK_HOST: 127.0.0.1
+    GAME_SERVICE_BASE_URL: http://game-service:8010
+    CATALOG_SERVICE_BASE_URL: http://emoji-catalog-service:8020
+    RENDER_SERVICE_BASE_URL: http://render-service:8030
+    INTERNAL_HTTP_TIMEOUT_SECONDS: "30"
+    SESSION_COOKIE_SECRET: replace-me
+
+  game: &env_game
+    GAME_SERVICE_HOST: 0.0.0.0
+    GAME_SERVICE_PORT: "8010"
+    CHALLENGE_STORAGE_BACKEND: file
+    CHALLENGE_STORAGE_FILE_PATH: /app/daily.json
+    HEALTHCHECK_HOST: 127.0.0.1
+
+  catalog: &env_catalog
+    CATALOG_SERVICE_HOST: 0.0.0.0
+    CATALOG_SERVICE_PORT: "8020"
+    HEALTHCHECK_HOST: 127.0.0.1
+
+  render: &env_render
+    RENDER_SERVICE_HOST: 0.0.0.0
+    RENDER_SERVICE_PORT: "8030"
+    GAME_SERVICE_BASE_URL: http://game-service:8010
+    INTERNAL_HTTP_TIMEOUT_SECONDS: "30"
+    HEALTHCHECK_HOST: 127.0.0.1
+
+  frontend: &env_frontend
+    API_BASE_URL: http://gateway-api:8000
+    FRONTEND_HOST: 0.0.0.0
+    FRONTEND_PORT: "8001"
+    HEALTHCHECK_HOST: 127.0.0.1
+
+  smokeCommon: &env_smoke_common
+    SMOKE_GATEWAY_BASE_URL: http://gateway-api:8000
+    SMOKE_PUBLIC_BASE_URL: http://gateway-api:8000
+    SMOKE_FRONTEND_BASE_URL: http://frontend:8001
+    SMOKE_GAME_SERVICE_BASE_URL: http://game-service:8010
+    SMOKE_CATALOG_SERVICE_BASE_URL: http://emoji-catalog-service:8020
+    SMOKE_RENDER_SERVICE_BASE_URL: http://render-service:8030
+    SMOKE_CONCURRENT_SESSION_COUNT: "100"
+    SMOKE_QUEUE_CONCURRENCY: "40"
+    SMOKE_QUEUE_ITERATIONS_PER_USER: "4"
+    SMOKE_QUEUE_DELAY_THRESHOLD_SECONDS: "2.0"
+    SMOKE_STRESS_TOTAL_REQUESTS: "500"
+    SMOKE_STRESS_CONCURRENCY: "40"
+    SMOKE_STRESS_MAX_ERROR_RATE: "0.03"
+    SMOKE_STRESS_P95_MAX_SECONDS: "2.0"
+
+services:
+  gateway-api:
+    environment: *env_gateway
+
+  game-service:
+    environment: *env_game
+
+  emoji-catalog-service:
+    environment: *env_catalog
+
+  render-service:
+    environment: *env_render
+
+  frontend:
+    environment: *env_frontend
+
+  smoke-test-queue-delay:
+    environment: *env_smoke_common
+
+  smoke-test-concurrent-sessions:
+    environment: *env_smoke_common
+
+  smoke-test-gateway-restrictions:
+    environment: *env_smoke_common
+
+  smoke-test-stress:
+    environment: *env_smoke_common
+
+  smoke-test-connectivity:
+    environment: *env_smoke_common

@@ -7,6 +7,12 @@ Expected image content:
 - Python runtime
 - dependencies from `requirements.txt`
 
+Build the test image from the shared root Dockerfile:
+
+```powershell
+docker build -t swiip23/blurmoji .
+```
+
 Default namespace in examples: `blurmoji`.
 
 Apply all jobs:
@@ -19,4 +25,3 @@ kubectl apply -f src/deploy/k8s/tests/job-gateway-restrictions.yaml
 kubectl apply -f src/deploy/k8s/tests/job-stress.yaml
 kubectl apply -f src/deploy/k8s/tests/job-connectivity.yaml
 ```
-

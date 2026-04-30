@@ -2,12 +2,7 @@ global:
   namespace: blurmoji
   imagePullPolicy: IfNotPresent
 
-images:
-  gateway: blurmoji/gateway:latest
-  game: blurmoji/game:latest
-  catalog: blurmoji/catalog:latest
-  render: blurmoji/render:latest
-  frontend: blurmoji/frontend:latest
+image: blurmoji:1.0
 
 servicePorts:
   gateway: 8000
@@ -16,8 +11,6 @@ servicePorts:
   render: 8030
   frontend: 8001
   redis: 6379
-  mysql: 3306
-  azurite: 10000
 
 replicas:
   gateway: 1
@@ -32,19 +25,15 @@ ingress:
   host: blurmoji.local
   tlsSecretName: ""
 
-persistence:
-  mysqlSize: 5Gi
-  azuriteSize: 5Gi
-
 config:
   internalHttpTimeoutSeconds: "30"
-  challengeStorageBackend: redis
+  challengeStorageBackend: "redis"
+  challengeStorageFilePath: ""
   redisDb: "0"
   redisTtlSeconds: "172800"
 
 secrets:
   sessionCookieSecret: change-me
-  mysqlRootPassword: change-me
 
 cron:
   precompute:

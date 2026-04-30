@@ -218,12 +218,15 @@ def main() -> int:
         os.environ["SMOKE_GATEWAY_BASE_URL"] = base_url
         os.environ["SMOKE_PUBLIC_BASE_URL"] = base_url
         os.environ["SMOKE_FRONTEND_BASE_URL"] = f"{base_url}/frontend"
+        os.environ["SMOKE_QUEUE_DELAY_THRESHOLD_SECONDS"] = "2.0"
         os.environ["SMOKE_QUEUE_CONCURRENCY"] = "8"
         os.environ["SMOKE_QUEUE_ITERATIONS_PER_USER"] = "2"
         os.environ["SMOKE_CONCURRENT_SESSION_COUNT"] = "16"
         os.environ["SMOKE_STRESS_TOTAL_REQUESTS"] = "80"
         os.environ["SMOKE_STRESS_CONCURRENCY"] = "8"
+        os.environ["SMOKE_STRESS_MAX_ERROR_RATE"] = "0.03"
         os.environ["SMOKE_STRESS_P95_MAX_SECONDS"] = "3.0"
+        os.environ["SMOKE_REDIS_PORT"] = "6379"
 
         import sys
 

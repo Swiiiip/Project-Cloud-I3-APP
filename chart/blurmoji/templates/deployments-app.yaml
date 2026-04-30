@@ -15,11 +15,12 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: {{ .Values.images.gateway }}
+          image: {{ .Values.image }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["python", "-m", "src.services.gateway.main"]
           envFrom:
             - configMapRef:
-                name: {{ include "blurmoji.fullname" . }}-config
+                name: {{ include "blurmoji.fullname" . }}-runtime-config
             - secretRef:
                 name: {{ include "blurmoji.fullname" . }}-secret
           ports:
@@ -42,11 +43,14 @@ spec:
     spec:
       containers:
         - name: game
-          image: {{ .Values.images.game }}
+          image: {{ .Values.image }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["python", "-m", "src.services.game.main"]
           envFrom:
             - configMapRef:
-                name: {{ include "blurmoji.fullname" . }}-config
+                name: {{ include "blurmoji.fullname" . }}-runtime-config
+            - configMapRef:
+                name: {{ include "blurmoji.fullname" . }}-storage-config
           ports:
             - containerPort: {{ .Values.servicePorts.game }}
 ---
@@ -67,11 +71,12 @@ spec:
     spec:
       containers:
         - name: catalog
-          image: {{ .Values.images.catalog }}
+          image: {{ .Values.image }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["python", "-m", "src.services.emoji_catalog.main"]
           envFrom:
             - configMapRef:
-                name: {{ include "blurmoji.fullname" . }}-config
+                name: {{ include "blurmoji.fullname" . }}-runtime-config
           ports:
             - containerPort: {{ .Values.servicePorts.catalog }}
 ---
@@ -92,11 +97,12 @@ spec:
     spec:
       containers:
         - name: render
-          image: {{ .Values.images.render }}
+          image: {{ .Values.image }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["python", "-m", "src.services.render.main"]
           envFrom:
             - configMapRef:
-                name: {{ include "blurmoji.fullname" . }}-config
+                name: {{ include "blurmoji.fullname" . }}-runtime-config
           ports:
             - containerPort: {{ .Values.servicePorts.render }}
 ---
@@ -117,11 +123,11 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: {{ .Values.images.frontend }}
+          image: {{ .Values.image }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["python", "-m", "src.frontend.main"]
           envFrom:
             - configMapRef:
-                name: {{ include "blurmoji.fullname" . }}-config
+                name: {{ include "blurmoji.fullname" . }}-runtime-config
           ports:
             - containerPort: {{ .Values.servicePorts.frontend }}
-

@@ -19,22 +19,23 @@ SCENARIOS = {
 
 
 def _wait_for_scenario_targets(config: SmokeConfig, selected: list[str]) -> None:
-    readiness_checks = [
-        http_get_check(f"{config.gateway_base_url}/health"),
-        http_get_check(f"{config.game_service_base_url}/internal/game/health") if config.game_service_base_url else http_get_check(f"{config.gateway_base_url}/health"),
-        http_get_check(f"{config.catalog_service_base_url}/internal/catalog/health") if config.catalog_service_base_url else http_get_check(f"{config.gateway_base_url}/health"),
-        http_get_check(f"{config.render_service_base_url}/internal/render/health") if config.render_service_base_url else http_get_check(f"{config.gateway_base_url}/health"),
-    ]
+    readiness_checks = [http_get_check(f"{config.gateway_base_url}/health")]
+
+    if config.game_service_base_url:
+        readiness_checks.append(http_get_check(f"{config.game_service_base_url}/internal/game/health"))
+
+    if config.catalog_service_base_url:
+        readiness_checks.append(http_get_check(f"{config.catalog_service_base_url}/internal/catalog/health"))
+
+    if config.render_service_base_url:
+        readiness_checks.append(http_get_check(f"{config.render_service_base_url}/internal/render/health"))
 
     if "gateway_restrictions" in selected:
         readiness_checks.append(http_get_check(f"{config.frontend_base_url}/"))
 
     if "connectivity" in selected:
-        readiness_checks.extend([
-            tcp_check(config.redis_host, config.redis_port),
-            tcp_check(config.mysql_host, config.mysql_port),
-            tcp_check(config.azurite_host, config.azurite_port),
-        ])
+        if config.redis_host and config.redis_port is not None:
+            readiness_checks.append(tcp_check(config.redis_host, config.redis_port))
 
     wait_for_checks(readiness_checks, timeout_seconds=180, interval_seconds=2.0)
 

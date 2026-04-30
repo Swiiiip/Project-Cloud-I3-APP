@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blurmoji.fullname" . }}-redis
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "blurmoji.fullname" . }}-redis
+  template:
+    metadata:
+      labels:
+        app: {{ include "blurmoji.fullname" . }}-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: {{ .Values.servicePorts.redis }}

@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from src.persistence.challenge_storage.abstract_challenge_storage import AbstractChallengeStorage
@@ -9,19 +8,15 @@ from src.persistence.challenge_storage.redis_challenge_storage import RedisChall
 
 class ChallengeStorageFactory:
     @staticmethod
-    def create(root_dir: Path) -> AbstractChallengeStorage:
-        backend = os.getenv("CHALLENGE_STORAGE_BACKEND", "file").strip().lower()
+    def create_file(file_path: Path) -> AbstractChallengeStorage:
+        return FileChallengeStorage(file_path)
 
-        if backend == "redis":
-            return RedisChallengeStorage(
-                host=os.getenv("REDIS_HOST", "localhost"),
-                port=int(os.getenv("REDIS_PORT", "6379")),
-                db=int(os.getenv("REDIS_DB", "0")),
-                ttl=int(os.getenv("REDIS_TTL_SECONDS", "86400")),
-            )
+    @staticmethod
+    def create_redis(host: str, port: int, db: int, ttl: int) -> AbstractChallengeStorage:
+        return RedisChallengeStorage(host=host, port=port, db=db, ttl=ttl)
 
-        if backend == "in_memory":
-            return InMemoryChallengeStorage()
+    @staticmethod
+    def create_in_memory() -> AbstractChallengeStorage:
+        return InMemoryChallengeStorage()
 
-        return FileChallengeStorage(root_dir / "daily.json")
 

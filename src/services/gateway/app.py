@@ -1,10 +1,11 @@
 from typing import Optional
 
 from fastapi import Body, Cookie, FastAPI, Request, Response
+from starlette.concurrency import run_in_threadpool
 
+from src.api.session.signed_cookie_session_resolver import SignedCookieSessionResolver
 from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple
 from src.services.gateway.internal_client import InternalServiceClient
-from src.services.gateway.session.signed_cookie_session_resolver import SignedCookieSessionResolver
 
 
 class GatewayApp:
@@ -33,7 +34,7 @@ class GatewayApp:
         session_id: Optional[str] = Cookie(None),
     ) -> dict:
         resolved_session_id = await self._session_resolver.resolve(request, response, session_id)
-        return self._internal_client.start_game(resolved_session_id)
+        return await run_in_threadpool(self._internal_client.start_game, resolved_session_id)
 
     def get_supported_emojis(self) -> dict:
         return self._internal_client.get_supported_emojis()
@@ -46,7 +47,7 @@ class GatewayApp:
         session_id: Optional[str] = Cookie(None),
     ) -> dict:
         resolved_session_id = await self._session_resolver.resolve(request, response, session_id)
-        return self._internal_client.submit_guess(resolved_session_id, couple_codepoint_guess)
+        return await run_in_threadpool(self._internal_client.submit_guess, resolved_session_id, couple_codepoint_guess)
 
     async def get_game_status(
         self,
@@ -55,7 +56,7 @@ class GatewayApp:
         session_id: Optional[str] = Cookie(None),
     ) -> dict:
         resolved_session_id = await self._session_resolver.resolve(request, response, session_id)
-        return self._internal_client.get_status(resolved_session_id)
+        return await run_in_threadpool(self._internal_client.get_status, resolved_session_id)
 
     async def render_image(
         self,
@@ -64,7 +65,8 @@ class GatewayApp:
         session_id: Optional[str] = Cookie(None),
     ) -> Response:
         resolved_session_id = await self._session_resolver.resolve(request, response, session_id)
-        return Response(content=self._internal_client.get_rendered_image(resolved_session_id), media_type="image/png")
+        image_bytes = await run_in_threadpool(self._internal_client.get_rendered_image, resolved_session_id)
+        return Response(content=image_bytes, media_type="image/png")
 
     @staticmethod
     def health() -> dict:

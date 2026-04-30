@@ -11,15 +11,22 @@ def run(config: SmokeConfig) -> ScenarioResult:
     client = GatewaySmokeClient(config.gateway_base_url)
 
     sessions = [client.new_session() for _ in range(config.queue_concurrency)]
+    session_ids: list[str] = []
     for session in sessions:
         start_response = client.start(session)
         start_response.raise_for_status()
+        session_id = session.cookies.get("session_id")
+        if not session_id:
+            raise ValueError("Queue delay smoke test expected a session cookie after /start")
+        session_ids.append(session_id)
 
     durations: list[float] = []
 
     def render_once(session_index: int) -> float:
         started_at = time.perf_counter()
-        response = client.render(sessions[session_index])
+        session = client.new_session()
+        session.cookies.set("session_id", session_ids[session_index], path="/")
+        response = client.render(session)
         response.raise_for_status()
         return time.perf_counter() - started_at
 

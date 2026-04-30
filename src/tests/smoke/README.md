@@ -7,7 +7,7 @@ Scenarios:
 - `concurrent_sessions`: validates isolation for at least 100 concurrent sessions
 - `gateway_restrictions`: confirms public users can use gateway routes but not internal routes
 - `stress`: mixed high-load calls with error-rate and latency SLO gates
-- `connectivity`: verifies gateway/internal health and Redis/MySQL/Azurite reachability
+- `connectivity`: verifies gateway/internal health and optionally configured infra reachability
 
 Run all scenarios:
 

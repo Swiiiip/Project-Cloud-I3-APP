@@ -1,0 +1,3 @@
+# Namespace creation is handled externally (kubectl create namespace / --create-namespace).
+# Leaving this template empty avoids Helm ownership conflicts with pre-existing namespaces.
+

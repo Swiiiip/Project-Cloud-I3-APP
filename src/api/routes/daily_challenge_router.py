@@ -2,12 +2,13 @@ import io
 from typing import Optional
 
 from fastapi import APIRouter, Response, Body, Cookie, Request
+from starlette.concurrency import run_in_threadpool
 
 from src.api.session.abstract_session_resolver import AbstractSessionResolver
 from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple
 from src.core.gameplay.image_blur_processor import ImageBlurProcessingService
-from src.core.service.daily_challenge import DailyChallengeService
-from src.core.service.emoji_kitchen import EmojiKitchenService
+from src.core.gameplay.daily_challenge import DailyChallengeService
+from src.core.emoji.emoji_kitchen import EmojiKitchenService
 
 
 class DailyChallengeRouter:
@@ -23,11 +24,12 @@ class DailyChallengeRouter:
     async def start_game(self, request: Request, response: Response,
                          session_id: Optional[str] = Cookie(None)):
         resolved_session_id = await self._session_resolver.resolve(request=request, response=response, session_id=session_id)
-        state = self.game_service.get_user_state(resolved_session_id)
+        state = await run_in_threadpool(self.game_service.get_user_state, resolved_session_id)
         return state.model_dump()
 
     async def get_supported_emojis(self):
-        return {"categories": list(self.emoji_service.fetch_grouped_supported_emoji_payload())}
+        payload = await run_in_threadpool(self.emoji_service.fetch_grouped_supported_emoji_payload)
+        return {"categories": list(payload)}
 
     async def submit_guess(self,
                            request: Request,
@@ -35,23 +37,24 @@ class DailyChallengeRouter:
                            couple_codepoint_guess: EmojiCodepointCouple = Body(...),
                            session_id: Optional[str] = Cookie(None)):
         resolved_session_id = await self._session_resolver.resolve(request=request, response=response, session_id=session_id)
-        state = self.game_service.process_guess(resolved_session_id, couple_codepoint_guess)
+        state = await run_in_threadpool(self.game_service.process_guess, resolved_session_id, couple_codepoint_guess)
         return state.model_dump()
 
     async def get_game_status(self, request: Request, response: Response,
                               session_id: Optional[str] = Cookie(None)):
         resolved_session_id = await self._session_resolver.resolve(request=request, response=response, session_id=session_id)
-        state = self.game_service.get_user_state(resolved_session_id)
+        state = await run_in_threadpool(self.game_service.get_user_state, resolved_session_id)
         return state.model_dump()
 
     async def render_image(self, request: Request, response: Response,
                            session_id: Optional[str] = Cookie(None)):
         resolved_session_id = await self._session_resolver.resolve(request=request, response=response, session_id=session_id)
-        state = self.game_service.get_user_state(resolved_session_id)
+        state = await run_in_threadpool(self.game_service.get_user_state, resolved_session_id)
         if state.is_completed:
-            pil_image = self.image_service.get_original_image(state.answer.result_image_url)
+            pil_image = await run_in_threadpool(self.image_service.get_original_image, state.answer.result_image_url)
         else:
-            pil_image = self.image_service.get_processed_image(
+            pil_image = await run_in_threadpool(
+                self.image_service.get_processed_image,
                 state.answer.result_image_url,
                 state.max_attempts - state.attempts
             )

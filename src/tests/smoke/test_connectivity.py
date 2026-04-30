@@ -21,9 +21,8 @@ def _tcp_connect(host: str, port: int, timeout: float = 3.0) -> bool:
 def run(config: SmokeConfig) -> ScenarioResult:
     checks: list[tuple[str, bool]] = []
 
-    checks.append(("redis_tcp", _tcp_connect(config.redis_host, config.redis_port)))
-    checks.append(("mysql_tcp", _tcp_connect(config.mysql_host, config.mysql_port)))
-    checks.append(("azurite_tcp", _tcp_connect(config.azurite_host, config.azurite_port)))
+    if config.redis_host and config.redis_port is not None:
+        checks.append(("redis_tcp", _tcp_connect(config.redis_host, config.redis_port)))
 
     gateway_health = requests.get(f"{config.gateway_base_url}/health", timeout=30)
     checks.append(("gateway_health", gateway_health.status_code == 200))

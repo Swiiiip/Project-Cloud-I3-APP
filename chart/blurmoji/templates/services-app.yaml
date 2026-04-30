@@ -57,4 +57,3 @@ spec:
   ports:
     - port: {{ .Values.servicePorts.frontend }}
       targetPort: {{ .Values.servicePorts.frontend }}
-

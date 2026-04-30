@@ -1,0 +1,42 @@
+global:
+  namespace: blurmoji
+  imagePullPolicy: Always
+
+images: blurmoji:1.0
+
+servicePorts:
+  gateway: 8000
+  game: 8010
+  catalog: 8020
+  render: 8030
+  frontend: 8001
+  redis: 6379
+
+replicas:
+  gateway: 3
+  game: 2
+  catalog: 2
+  render: 2
+  frontend: 2
+
+ingress:
+  enabled: true
+  className: nginx
+  host: blurmoji.example.com
+  tlsSecretName: blurmoji-tls
+
+config:
+  internalHttpTimeoutSeconds: "30"
+  challengeStorageBackend: "redis"
+  challengeStorageFilePath: "/app/daily.json"
+  redisDb: "0"
+  redisTtlSeconds: "172800"
+
+secrets:
+  sessionCookieSecret: replace-in-cluster
+
+cron:
+  precompute:
+    schedule: "0 0 * * *"
+  emojiSync:
+    schedule: "0 */12 * * *"

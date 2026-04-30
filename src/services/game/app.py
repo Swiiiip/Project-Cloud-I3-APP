@@ -1,18 +1,17 @@
 from fastapi import FastAPI, Query
 
+from src.persistence.challenge_storage.abstract_challenge_storage import AbstractChallengeStorage
+from src.persistence.emoji_repository.file_emoji_repository import FileEmojiRepository
 from src.services.game.game_contracts import GameGuessRequest
-from src.core.service.daily_challenge import DailyChallengeService
-from src.core.service.emoji_kitchen import EmojiKitchenService
-from src.persistence.challenge_storage_factory import ChallengeStorageFactory
-from src.persistence.file_emoji_repository import FileEmojiRepository
+from src.core.gameplay.daily_challenge import DailyChallengeService
+from src.core.emoji.emoji_kitchen import EmojiKitchenService
 from src.utils.path_handler import PathHandler
 
 
 class GameServiceApp:
-    def __init__(self):
+    def __init__(self, challenge_storage: AbstractChallengeStorage):
         repo = FileEmojiRepository(PathHandler.root_dir() / "emojis.json")
         emoji_service = EmojiKitchenService(repo)
-        challenge_storage = ChallengeStorageFactory.create(PathHandler.root_dir())
         self._game_service = DailyChallengeService(emoji_service, challenge_storage)
         self._app = FastAPI(title="Blurmoji Game Service")
         self._register_routes()
@@ -44,5 +43,5 @@ class GameServiceApp:
         return {"status": "ok"}
 
 
-def create_app() -> FastAPI:
-    return GameServiceApp().app
+def create_app(challenge_storage: AbstractChallengeStorage) -> FastAPI:
+    return GameServiceApp(challenge_storage).app

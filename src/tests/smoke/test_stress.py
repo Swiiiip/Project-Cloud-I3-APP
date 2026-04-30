@@ -38,7 +38,7 @@ def run(config: SmokeConfig) -> ScenarioResult:
         op = random.random()
         session = requests.Session()
         cookie = random.choice(cookie_pool)
-        session.headers.update({"Cookie": f"session_id={cookie}"})
+        session.cookies.set("session_id", cookie, path="/")
 
         try:
             if op < 0.50:
