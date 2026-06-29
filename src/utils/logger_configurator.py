@@ -9,6 +9,5 @@ class LoggerConfigurator:
     @classmethod
     def config_logger(cls):
         logging.basicConfig(level=INFO,
-                            encoding="utf-8",
                             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                             handlers=[logging.StreamHandler(sys.stdout)])

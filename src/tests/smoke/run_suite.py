@@ -21,21 +21,21 @@ SCENARIOS = {
 def _wait_for_scenario_targets(config: SmokeConfig, selected: list[str]) -> None:
     readiness_checks = [http_get_check(f"{config.gateway_base_url}/health")]
 
-    if config.game_service_base_url:
-        readiness_checks.append(http_get_check(f"{config.game_service_base_url}/internal/game/health"))
+    if config.game_engine_service_base_url:
+        readiness_checks.append(http_get_check(f"{config.game_engine_service_base_url}/internal/game_engine/health"))
 
-    if config.catalog_service_base_url:
-        readiness_checks.append(http_get_check(f"{config.catalog_service_base_url}/internal/catalog/health"))
+    if config.emoji_catalog_service_base_url:
+        readiness_checks.append(http_get_check(f"{config.emoji_catalog_service_base_url}/internal/emoji_catalog/health"))
 
-    if config.render_service_base_url:
-        readiness_checks.append(http_get_check(f"{config.render_service_base_url}/internal/render/health"))
+    if config.emoji_render_service_base_url:
+        readiness_checks.append(http_get_check(f"{config.emoji_render_service_base_url}/internal/emoji_render/health"))
 
     if "gateway_restrictions" in selected:
         readiness_checks.append(http_get_check(f"{config.frontend_base_url}/"))
 
     if "connectivity" in selected:
-        if config.redis_host and config.redis_port is not None:
-            readiness_checks.append(tcp_check(config.redis_host, config.redis_port))
+        if config.game_state_storage_host and config.game_state_storage_port is not None:
+            readiness_checks.append(tcp_check(config.game_state_storage_host, config.game_state_storage_port))
 
     wait_for_checks(readiness_checks, timeout_seconds=180, interval_seconds=2.0)
 

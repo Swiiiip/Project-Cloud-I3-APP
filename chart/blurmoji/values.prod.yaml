@@ -3,15 +3,23 @@ global:
 
 replicas:
   gateway: 3
-  game: 2
-  catalog: 2
-  render: 2
+  gameEngine: 2
+  emojiCatalog: 2
+  emojiRender: 2
   frontend: 2
 
 ingress:
-  host: blurmoji.example.com
+  host: localhost   # would replace with real host for production, like blurmoji.com
   tlsSecretName: blurmoji-tls
 
+config:
+  challengeStorageBackend: game_state_storage
+
+infra:
+  gameStateStorage:
+    enabled: true
+  fileStorage:
+    enabled: false
 
 secrets:
   sessionCookieSecret: replace-in-cluster

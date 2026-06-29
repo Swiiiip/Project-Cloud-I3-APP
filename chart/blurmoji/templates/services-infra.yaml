@@ -1,11 +1,13 @@
+{{- if .Values.infra.gameStateStorage.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "blurmoji.fullname" . }}-redis
+  name: {{ include "blurmoji.fullname" . }}-game-state-storage
   namespace: {{ .Values.global.namespace }}
 spec:
   selector:
-    app: {{ include "blurmoji.fullname" . }}-redis
+    app: {{ include "blurmoji.fullname" . }}-game-state-storage
   ports:
-    - port: {{ .Values.servicePorts.redis }}
-      targetPort: {{ .Values.servicePorts.redis }}
+    - port: {{ .Values.servicePorts.gameStateStorage }}
+      targetPort: {{ .Values.servicePorts.gameStateStorage }}
+{{- end }}

@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import Body, Cookie, FastAPI, Request, Response
 from starlette.concurrency import run_in_threadpool
 
-from src.api.session.signed_cookie_session_resolver import SignedCookieSessionResolver
+from src.services.gateway.signed_cookie_session_resolver import SignedCookieSessionResolver
 from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple
 from src.services.gateway.internal_client import InternalServiceClient
 
@@ -20,14 +20,14 @@ class GatewayApp:
         return self._app
 
     def _register_routes(self) -> None:
-        self._app.add_api_route("/api/v1/daily/start", self.start_game, methods=["GET"])
-        self._app.add_api_route("/api/v1/daily/supported_emojis", self.get_supported_emojis, methods=["GET"])
-        self._app.add_api_route("/api/v1/daily/get_status", self.get_game_status, methods=["GET"])
-        self._app.add_api_route("/api/v1/daily/guess", self.submit_guess, methods=["POST"])
-        self._app.add_api_route("/api/v1/daily/render", self.render_image, methods=["GET"])
-        self._app.add_api_route("/health", self.health, methods=["GET"])
+        self._app.add_api_route("/api/v1/daily/start", self._start_game, methods=["GET"])
+        self._app.add_api_route("/api/v1/daily/supported_emojis", self._get_supported_emojis, methods=["GET"])
+        self._app.add_api_route("/api/v1/daily/get_status", self._get_game_status, methods=["GET"])
+        self._app.add_api_route("/api/v1/daily/guess", self._submit_guess, methods=["POST"])
+        self._app.add_api_route("/api/v1/daily/render", self._render_image, methods=["GET"])
+        self._app.add_api_route("/health", self._health, methods=["GET"])
 
-    async def start_game(
+    async def _start_game(
         self,
         request: Request,
         response: Response,
@@ -36,10 +36,10 @@ class GatewayApp:
         resolved_session_id = await self._session_resolver.resolve(request, response, session_id)
         return await run_in_threadpool(self._internal_client.start_game, resolved_session_id)
 
-    def get_supported_emojis(self) -> dict:
+    def _get_supported_emojis(self) -> dict:
         return self._internal_client.get_supported_emojis()
 
-    async def submit_guess(
+    async def _submit_guess(
         self,
         request: Request,
         response: Response,
@@ -49,7 +49,7 @@ class GatewayApp:
         resolved_session_id = await self._session_resolver.resolve(request, response, session_id)
         return await run_in_threadpool(self._internal_client.submit_guess, resolved_session_id, couple_codepoint_guess)
 
-    async def get_game_status(
+    async def _get_game_status(
         self,
         request: Request,
         response: Response,
@@ -58,7 +58,7 @@ class GatewayApp:
         resolved_session_id = await self._session_resolver.resolve(request, response, session_id)
         return await run_in_threadpool(self._internal_client.get_status, resolved_session_id)
 
-    async def render_image(
+    async def _render_image(
         self,
         request: Request,
         response: Response,
@@ -69,7 +69,7 @@ class GatewayApp:
         return Response(content=image_bytes, media_type="image/png")
 
     @staticmethod
-    def health() -> dict:
+    def _health() -> dict:
         return {"status": "ok"}
 
 

@@ -21,8 +21,9 @@ releases:
     chart: ./chart/blurmoji
     values:
       - ./chart/blurmoji/values.yaml
+      {{- if eq .Environment.Name "dev" }}
+      - ./chart/blurmoji/values.dev.yaml
+      {{- end }}
       {{- if eq .Environment.Name "prod" }}
       - ./chart/blurmoji/values.prod.yaml
       {{- end }}
-
-

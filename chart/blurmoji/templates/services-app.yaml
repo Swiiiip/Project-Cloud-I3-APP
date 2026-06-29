@@ -13,38 +13,38 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "blurmoji.fullname" . }}-game
+  name: {{ include "blurmoji.fullname" . }}-game-engine
   namespace: {{ .Values.global.namespace }}
 spec:
   selector:
-    app: {{ include "blurmoji.fullname" . }}-game
+    app: {{ include "blurmoji.fullname" . }}-game-engine
   ports:
-    - port: {{ .Values.servicePorts.game }}
-      targetPort: {{ .Values.servicePorts.game }}
+    - port: {{ .Values.servicePorts.gameEngine }}
+      targetPort: {{ .Values.servicePorts.gameEngine }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "blurmoji.fullname" . }}-catalog
+  name: {{ include "blurmoji.fullname" . }}-emoji-catalog
   namespace: {{ .Values.global.namespace }}
 spec:
   selector:
-    app: {{ include "blurmoji.fullname" . }}-catalog
+    app: {{ include "blurmoji.fullname" . }}-emoji-catalog
   ports:
-    - port: {{ .Values.servicePorts.catalog }}
-      targetPort: {{ .Values.servicePorts.catalog }}
+    - port: {{ .Values.servicePorts.emojiCatalog }}
+      targetPort: {{ .Values.servicePorts.emojiCatalog }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "blurmoji.fullname" . }}-render
+  name: {{ include "blurmoji.fullname" . }}-emoji-render
   namespace: {{ .Values.global.namespace }}
 spec:
   selector:
-    app: {{ include "blurmoji.fullname" . }}-render
+    app: {{ include "blurmoji.fullname" . }}-emoji-render
   ports:
-    - port: {{ .Values.servicePorts.render }}
-      targetPort: {{ .Values.servicePorts.render }}
+    - port: {{ .Values.servicePorts.emojiRender }}
+      targetPort: {{ .Values.servicePorts.emojiRender }}
 ---
 apiVersion: v1
 kind: Service

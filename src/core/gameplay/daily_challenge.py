@@ -10,17 +10,17 @@ from src.core.gameplay.dto.challenge_state import ChallengeState
 from src.core.gameplay.dto.guess_slot_match import GuessSlotMatch
 from src.core.emoji.emoji_kitchen import EmojiKitchenService
 from src.persistence.challenge_storage.abstract_challenge_storage import AbstractChallengeStorage
-from src.utils.runtime_env import RuntimeEnv
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class DailyChallengeService:
     _max_combination_retries = 3
 
-    def __init__(self, emoji_service: EmojiKitchenService, storage: AbstractChallengeStorage):
+    def __init__(self, emoji_service: EmojiKitchenService, storage: AbstractChallengeStorage, max_attempts: int):
         self._emoji_service = emoji_service
         self._storage = storage
+        self._max_attempts = max_attempts
         self._guess_locks: dict[str, threading.Lock] = {}
         self._guess_locks_guard = threading.Lock()
         self._daily_combination_lock = threading.Lock()
@@ -40,7 +40,7 @@ class DailyChallengeService:
                                            result_image_url=daily_combination.result_image_url)
             state = ChallengeState(answer=daily_answer,
                                    attempts=0,
-                                   max_attempts=RuntimeEnv.require_int("DAILY_CHALLENGE_MAX_GUESSES"),
+                                   max_attempts=self._max_attempts,
                                    is_completed=False,
                                    past_guesses=(),
                                    past_guess_matches=())

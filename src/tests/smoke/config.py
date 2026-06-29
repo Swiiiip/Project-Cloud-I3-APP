@@ -7,9 +7,9 @@ class SmokeConfig:
     gateway_base_url: str
     frontend_base_url: str
     public_base_url: str
-    game_service_base_url: str
-    catalog_service_base_url: str
-    render_service_base_url: str
+    game_engine_service_base_url: str
+    emoji_catalog_service_base_url: str
+    emoji_render_service_base_url: str
     queue_concurrency: int
     queue_iterations_per_user: int
     queue_delay_threshold_seconds: float
@@ -18,8 +18,8 @@ class SmokeConfig:
     stress_concurrency: int
     stress_max_error_rate: float
     stress_p95_max_seconds: float
-    redis_host: str
-    redis_port: int | None
+    game_state_storage_host: str
+    game_state_storage_port: int | None
 
     @staticmethod
     def from_env() -> "SmokeConfig":
@@ -33,8 +33,15 @@ class SmokeConfig:
             value = os.getenv(key)
             return value.strip() if value and value.strip() else ""
 
-        def optional_int_env(key: str) -> int | None:
-            value = optional_env(key)
+        def first_optional_env(*keys: str) -> str:
+            for key in keys:
+                value = optional_env(key)
+                if value:
+                    return value
+            return ""
+
+        def first_optional_int_env(*keys: str) -> int | None:
+            value = first_optional_env(*keys)
             if not value:
                 return None
             return int(value)
@@ -43,9 +50,15 @@ class SmokeConfig:
             gateway_base_url=require_env("SMOKE_GATEWAY_BASE_URL").rstrip("/"),
             frontend_base_url=require_env("SMOKE_FRONTEND_BASE_URL").rstrip("/"),
             public_base_url=require_env("SMOKE_PUBLIC_BASE_URL").rstrip("/"),
-            game_service_base_url=optional_env("SMOKE_GAME_SERVICE_BASE_URL").rstrip("/"),
-            catalog_service_base_url=optional_env("SMOKE_CATALOG_SERVICE_BASE_URL").rstrip("/"),
-            render_service_base_url=optional_env("SMOKE_RENDER_SERVICE_BASE_URL").rstrip("/"),
+            game_engine_service_base_url=first_optional_env(
+                "SMOKE_GAME_ENGINE_SERVICE_BASE_URL", "SMOKE_GAME_SERVICE_BASE_URL"
+            ).rstrip("/"),
+            emoji_catalog_service_base_url=first_optional_env(
+                "SMOKE_EMOJI_CATALOG_SERVICE_BASE_URL", "SMOKE_CATALOG_SERVICE_BASE_URL"
+            ).rstrip("/"),
+            emoji_render_service_base_url=first_optional_env(
+                "SMOKE_EMOJI_RENDER_SERVICE_BASE_URL", "SMOKE_RENDER_SERVICE_BASE_URL"
+            ).rstrip("/"),
             queue_concurrency=int(require_env("SMOKE_QUEUE_CONCURRENCY")),
             queue_iterations_per_user=int(require_env("SMOKE_QUEUE_ITERATIONS_PER_USER")),
             queue_delay_threshold_seconds=float(require_env("SMOKE_QUEUE_DELAY_THRESHOLD_SECONDS")),
@@ -54,6 +67,6 @@ class SmokeConfig:
             stress_concurrency=int(require_env("SMOKE_STRESS_CONCURRENCY")),
             stress_max_error_rate=float(require_env("SMOKE_STRESS_MAX_ERROR_RATE")),
             stress_p95_max_seconds=float(require_env("SMOKE_STRESS_P95_MAX_SECONDS")),
-            redis_host=optional_env("SMOKE_REDIS_HOST"),
-            redis_port=optional_int_env("SMOKE_REDIS_PORT"),
+            game_state_storage_host=first_optional_env("SMOKE_GAME_STATE_STORAGE_HOST", "SMOKE_REDIS_HOST"),
+            game_state_storage_port=first_optional_int_env("SMOKE_GAME_STATE_STORAGE_PORT", "SMOKE_REDIS_PORT"),
         )

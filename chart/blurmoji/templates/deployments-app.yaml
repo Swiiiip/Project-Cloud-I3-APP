@@ -29,48 +29,58 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "blurmoji.fullname" . }}-game
+  name: {{ include "blurmoji.fullname" . }}-game-engine
   namespace: {{ .Values.global.namespace }}
 spec:
-  replicas: {{ .Values.replicas.game }}
+  replicas: {{ .Values.replicas.gameEngine }}
   selector:
     matchLabels:
-      app: {{ include "blurmoji.fullname" . }}-game
+      app: {{ include "blurmoji.fullname" . }}-game-engine
   template:
     metadata:
       labels:
-        app: {{ include "blurmoji.fullname" . }}-game
+        app: {{ include "blurmoji.fullname" . }}-game-engine
     spec:
       containers:
-        - name: game
+        - name: game-engine
           image: {{ include "blurmoji.appImage" . }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
-          command: ["python", "-m", "src.services.game.main"]
+          command: ["python", "-m", "src.services.game_engine.main"]
           envFrom:
             - configMapRef:
                 name: {{ include "blurmoji.fullname" . }}-runtime-config
             - configMapRef:
                 name: {{ include "blurmoji.fullname" . }}-storage-config
           ports:
-            - containerPort: {{ .Values.servicePorts.game }}
+            - containerPort: {{ .Values.servicePorts.gameEngine }}
+          {{- if .Values.infra.fileStorage.enabled }}
+          volumeMounts:
+            - name: challenge-data
+              mountPath: /app/data
+          {{- end }}
+      {{- if .Values.infra.fileStorage.enabled }}
+      volumes:
+        - name: challenge-data
+          emptyDir: {}
+      {{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "blurmoji.fullname" . }}-catalog
+  name: {{ include "blurmoji.fullname" . }}-emoji-catalog
   namespace: {{ .Values.global.namespace }}
 spec:
-  replicas: {{ .Values.replicas.catalog }}
+  replicas: {{ .Values.replicas.emojiCatalog }}
   selector:
     matchLabels:
-      app: {{ include "blurmoji.fullname" . }}-catalog
+      app: {{ include "blurmoji.fullname" . }}-emoji-catalog
   template:
     metadata:
       labels:
-        app: {{ include "blurmoji.fullname" . }}-catalog
+        app: {{ include "blurmoji.fullname" . }}-emoji-catalog
     spec:
       containers:
-        - name: catalog
+        - name: emoji-catalog
           image: {{ include "blurmoji.appImage" . }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: ["python", "-m", "src.services.emoji_catalog.main"]
@@ -78,33 +88,33 @@ spec:
             - configMapRef:
                 name: {{ include "blurmoji.fullname" . }}-runtime-config
           ports:
-            - containerPort: {{ .Values.servicePorts.catalog }}
+            - containerPort: {{ .Values.servicePorts.emojiCatalog }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "blurmoji.fullname" . }}-render
+  name: {{ include "blurmoji.fullname" . }}-emoji-render
   namespace: {{ .Values.global.namespace }}
 spec:
-  replicas: {{ .Values.replicas.render }}
+  replicas: {{ .Values.replicas.emojiRender }}
   selector:
     matchLabels:
-      app: {{ include "blurmoji.fullname" . }}-render
+      app: {{ include "blurmoji.fullname" . }}-emoji-render
   template:
     metadata:
       labels:
-        app: {{ include "blurmoji.fullname" . }}-render
+        app: {{ include "blurmoji.fullname" . }}-emoji-render
     spec:
       containers:
-        - name: render
+        - name: emoji-render
           image: {{ include "blurmoji.appImage" . }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
-          command: ["python", "-m", "src.services.render.main"]
+          command: ["python", "-m", "src.services.emoji_render.main"]
           envFrom:
             - configMapRef:
                 name: {{ include "blurmoji.fullname" . }}-runtime-config
           ports:
-            - containerPort: {{ .Values.servicePorts.render }}
+            - containerPort: {{ .Values.servicePorts.emojiRender }}
 ---
 apiVersion: apps/v1
 kind: Deployment

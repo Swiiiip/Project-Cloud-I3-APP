@@ -1,16 +1,12 @@
-import os
-
-from dotenv import load_dotenv
 from nicegui import ui
 from nicegui.events import KeyEventArguments
 from src.frontend.view.game_sections import ChallengeImageSection, EmojiGridSection, GuessHistorySection
 from src.frontend.view.game_view import BlurmojiView
 from src.frontend.state.session_state import FrontendSessionState
 from src.frontend.state.abstract_frontend_state_provider import AbstractFrontendStateProvider
-from src.frontend.state.in_memory_frontend_state_provider import InMemoryFrontendStateProvider
 from src.frontend.view.ui_constants import UIClasses, UIColors, UIContent
-from src.utils.logger_coonfigurator import LoggerConfigurator
-from src.utils.path_handler import PathHandler
+from src.frontend.bootstrap import FrontendBootstrap
+from src.utils.logger_configurator import LoggerConfigurator
 
 
 class WebHandler:
@@ -62,12 +58,20 @@ class WebHandler:
             reload=reload
         )
 
+    def close(self) -> None:
+        close = getattr(self._state_provider, "close", None)
+        if callable(close):
+            close()
+
 
 if __name__ == '__main__':
     LoggerConfigurator.config_logger()
-    load_dotenv(dotenv_path=PathHandler.dot_env(), override=False)
-
-    web = WebHandler(host=os.environ["FRONTEND_HOST"],
-                     port=int(os.environ["FRONTEND_PORT"]),
-                     state_provider=InMemoryFrontendStateProvider(os.environ["API_BASE_URL"]))
-    web.run(reload=False)
+    web = WebHandler(
+        host=FrontendBootstrap.bind_host(),
+        port=FrontendBootstrap.bind_port(),
+        state_provider=FrontendBootstrap.create_state_provider(),
+    )
+    try:
+        web.run(reload=False)
+    finally:
+        web.close()

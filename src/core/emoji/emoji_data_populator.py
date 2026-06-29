@@ -9,15 +9,21 @@ from src.core.emoji.dto.emoji_couple import EmojiDataCouple
 from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.emoji.dto.unit_data import UnitData
 from src.persistence.emoji_repository.abstract_emoji_repository import AbstractEmojiRepository
-from src.utils.runtime_env import RuntimeEnv
 
 logger = logging.getLogger(__name__)
 UNKNOWN_TAXONOMY_LABEL = "Unknown"
 
 
 class EmojiDataPopulator:
-    def __init__(self, repository: AbstractEmojiRepository):
+    def __init__(
+        self,
+        repository: AbstractEmojiRepository,
+        metadata_url: str,
+        request_timeout_seconds: int,
+    ):
         self._repository = repository
+        self._metadata_url = metadata_url
+        self._request_timeout_seconds = request_timeout_seconds
 
     def populate_repository(self):
         raw_metadata = self._fetch_raw_emoji_kitchen_metadata()
@@ -44,10 +50,11 @@ class EmojiDataPopulator:
     def _register_emoji(self, emoji: EmojiData):
         self._repository.save_raw_emoji(emoji.codepoint, emoji.to_dict())
 
-    @staticmethod
-    def _fetch_raw_emoji_kitchen_metadata() -> dict[str, Any]:
-        response = requests.get(url=RuntimeEnv.require_str("EMOJI_KITCHEN_METADATA_URL"),
-                                timeout=RuntimeEnv.require_int("INTERNAL_HTTP_TIMEOUT_SECONDS"))
+    def _fetch_raw_emoji_kitchen_metadata(self) -> dict[str, Any]:
+        response = requests.get(
+            url=self._metadata_url,
+            timeout=self._request_timeout_seconds,
+        )
         response.raise_for_status()
         full_json = response.json()
         return full_json.get("data", {})

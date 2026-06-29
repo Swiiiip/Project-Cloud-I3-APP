@@ -17,7 +17,7 @@ spec:
               args:
                 - /bin/sh
                 - -c
-                - 'curl -fsS "http://{{ include "blurmoji.fullname" . }}-game:{{ .Values.servicePorts.game }}/internal/game/start?session_id=cron-precompute"'
+                - 'curl -fsS "http://{{ include "blurmoji.fullname" . }}-game-engine:{{ .Values.servicePorts.gameEngine }}/internal/game_engine/start?session_id=cron-precompute"'
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -38,4 +38,4 @@ spec:
               args:
                 - /bin/sh
                 - -c
-                - 'curl -fsS "http://{{ include "blurmoji.fullname" . }}-catalog:{{ .Values.servicePorts.catalog }}/internal/catalog/supported_emojis" > /dev/null'
+                - 'curl -fsS "http://{{ include "blurmoji.fullname" . }}-emoji-catalog:{{ .Values.servicePorts.emojiCatalog }}/internal/emoji_catalog/supported_emojis" > /dev/null'

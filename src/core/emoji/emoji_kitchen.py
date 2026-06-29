@@ -7,6 +7,7 @@ from src.core.emoji.dto.emoji_couple import EmojiDataCouple
 from src.core.emoji.dto.emoji_category_data import EmojiCategoryData
 from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.emoji.emoji_data_populator import EmojiDataPopulator
+from src.config.constants import EmojiKitchen, Http
 from src.persistence.emoji_repository.abstract_emoji_repository import AbstractEmojiRepository
 
 logger = logging.getLogger(__name__)
@@ -102,7 +103,11 @@ class EmojiKitchenService:
                 logger.info("Emoji repository already populated, skipping remote metadata fetch")
                 return
             logger.info("Populating emoji repository with data from source")
-            populator = EmojiDataPopulator(repository=repo)
+            populator = EmojiDataPopulator(
+                repository=repo,
+                metadata_url=EmojiKitchen.METADATA_URL,
+                request_timeout_seconds=Http.INTERNAL_TIMEOUT_SECONDS,
+            )
             populator.populate_repository()
 
     def _refresh_cache(self) -> None:

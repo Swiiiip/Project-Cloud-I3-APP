@@ -16,4 +16,3 @@ class RuntimeEnv:
             return int(value)
         except ValueError as exc:
             raise ValueError(f"Environment variable '{key}' must be an integer") from exc
-

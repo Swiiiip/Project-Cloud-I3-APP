@@ -3,15 +3,15 @@ import requests
 from src.core.gameplay.dto.challenge_state import ChallengeState
 
 
-class GameServiceClient:
-    def __init__(self, game_service_base_url: str, timeout_seconds: int):
-        self._base_url = game_service_base_url.rstrip("/")
+class GameEngineServiceClient:
+    def __init__(self, game_engine_service_base_url: str, timeout_seconds: int):
+        self._base_url = game_engine_service_base_url.rstrip("/")
         self._timeout_seconds = timeout_seconds
 
     def get_status(self, session_id: str) -> ChallengeState:
         with requests.Session() as session:
             response = session.get(
-                f"{self._base_url}/internal/game/status",
+                f"{self._base_url}/internal/game_engine/status",
                 params={"session_id": session_id},
                 timeout=self._timeout_seconds,
             )

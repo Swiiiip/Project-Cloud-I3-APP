@@ -21,23 +21,23 @@ def _tcp_connect(host: str, port: int, timeout: float = 3.0) -> bool:
 def run(config: SmokeConfig) -> ScenarioResult:
     checks: list[tuple[str, bool]] = []
 
-    if config.redis_host and config.redis_port is not None:
-        checks.append(("redis_tcp", _tcp_connect(config.redis_host, config.redis_port)))
+    if config.game_state_storage_host and config.game_state_storage_port is not None:
+        checks.append(("game_state_storage_tcp", _tcp_connect(config.game_state_storage_host, config.game_state_storage_port)))
 
     gateway_health = requests.get(f"{config.gateway_base_url}/health", timeout=30)
     checks.append(("gateway_health", gateway_health.status_code == 200))
 
-    if config.game_service_base_url:
-        game_health = requests.get(f"{config.game_service_base_url}/internal/game/health", timeout=30)
-        checks.append(("game_health", game_health.status_code == 200))
+    if config.game_engine_service_base_url:
+        game_engine_health = requests.get(f"{config.game_engine_service_base_url}/internal/game_engine/health", timeout=30)
+        checks.append(("game_engine_health", game_engine_health.status_code == 200))
 
-    if config.catalog_service_base_url:
-        catalog_health = requests.get(f"{config.catalog_service_base_url}/internal/catalog/health", timeout=30)
-        checks.append(("catalog_health", catalog_health.status_code == 200))
+    if config.emoji_catalog_service_base_url:
+        emoji_catalog_health = requests.get(f"{config.emoji_catalog_service_base_url}/internal/emoji_catalog/health", timeout=30)
+        checks.append(("emoji_catalog_health", emoji_catalog_health.status_code == 200))
 
-    if config.render_service_base_url:
-        render_health = requests.get(f"{config.render_service_base_url}/internal/render/health", timeout=30)
-        checks.append(("render_health", render_health.status_code == 200))
+    if config.emoji_render_service_base_url:
+        emoji_render_health = requests.get(f"{config.emoji_render_service_base_url}/internal/emoji_render/health", timeout=30)
+        checks.append(("emoji_render_health", emoji_render_health.status_code == 200))
 
     passed = all(ok for _, ok in checks)
     details = ", ".join(f"{name}={ok}" for name, ok in checks)

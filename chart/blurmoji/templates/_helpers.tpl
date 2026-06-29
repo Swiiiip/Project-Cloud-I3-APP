@@ -24,8 +24,8 @@ If release name contains chart name it will be used as a full name.
 {{- printf "%s:%s" .Values.images.app.repository .Values.images.app.tag -}}
 {{- end -}}
 
-{{- define "blurmoji.redisImage" -}}
-{{- printf "%s:%s" .Values.images.redis.repository .Values.images.redis.tag -}}
+{{- define "blurmoji.gameStateStorageImage" -}}
+{{- printf "%s:%s" .Values.images.gameStateStorage.repository .Values.images.gameStateStorage.tag -}}
 {{- end -}}
 
 {{- define "blurmoji.curlImage" -}}

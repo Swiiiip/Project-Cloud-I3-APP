@@ -4,20 +4,7 @@ metadata:
   name: {{ include "blurmoji.fullname" . }}-runtime-config
   namespace: {{ .Values.global.namespace }}
 data:
-  INTERNAL_HTTP_TIMEOUT_SECONDS: {{ .Values.config.internalHttpTimeoutSeconds | quote }}
-  DAILY_CHALLENGE_MAX_GUESSES: {{ .Values.config.dailyChallengeMaxGuesses | quote }}
-  EMOJI_KITCHEN_METADATA_URL: {{ .Values.config.emojiKitchenMetadataUrl | quote }}
-  API_HOST: {{ .Values.config.bindHost | quote }}
-  API_PORT: {{ .Values.servicePorts.gateway | quote }}
-  GAME_SERVICE_HOST: {{ .Values.config.bindHost | quote }}
-  GAME_SERVICE_PORT: {{ .Values.servicePorts.game | quote }}
-  CATALOG_SERVICE_HOST: {{ .Values.config.bindHost | quote }}
-  CATALOG_SERVICE_PORT: {{ .Values.servicePorts.catalog | quote }}
-  RENDER_SERVICE_HOST: {{ .Values.config.bindHost | quote }}
-  RENDER_SERVICE_PORT: {{ .Values.servicePorts.render | quote }}
-  FRONTEND_HOST: {{ .Values.config.bindHost | quote }}
-  FRONTEND_PORT: {{ .Values.servicePorts.frontend | quote }}
-  GAME_SERVICE_BASE_URL: "http://{{ include "blurmoji.fullname" . }}-game:{{ .Values.servicePorts.game }}"
-  CATALOG_SERVICE_BASE_URL: "http://{{ include "blurmoji.fullname" . }}-catalog:{{ .Values.servicePorts.catalog }}"
-  RENDER_SERVICE_BASE_URL: "http://{{ include "blurmoji.fullname" . }}-render:{{ .Values.servicePorts.render }}"
+  GAME_ENGINE_SERVICE_BASE_URL: "http://{{ include "blurmoji.fullname" . }}-game-engine:{{ .Values.servicePorts.gameEngine }}"
+  EMOJI_CATALOG_SERVICE_BASE_URL: "http://{{ include "blurmoji.fullname" . }}-emoji-catalog:{{ .Values.servicePorts.emojiCatalog }}"
+  EMOJI_RENDER_SERVICE_BASE_URL: "http://{{ include "blurmoji.fullname" . }}-emoji-render:{{ .Values.servicePorts.emojiRender }}"
   API_BASE_URL: "http://{{ include "blurmoji.fullname" . }}-gateway:{{ .Values.servicePorts.gateway }}"

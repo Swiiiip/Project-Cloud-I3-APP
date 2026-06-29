@@ -11,9 +11,9 @@ def run(config: SmokeConfig) -> ScenarioResult:
     gateway_open = gateway_start.status_code == 200
 
     restricted_paths = (
-        "/internal/game/health",
-        "/internal/catalog/health",
-        "/internal/render/health",
+        "/internal/game_engine/health",
+        "/internal/emoji_catalog/health",
+        "/internal/emoji_render/health",
     )
     restricted_visible = []
     for path in restricted_paths:

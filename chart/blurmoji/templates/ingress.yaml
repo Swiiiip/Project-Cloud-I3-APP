@@ -16,13 +16,6 @@ spec:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "blurmoji.fullname" . }}-gateway
-                port:
-                  number: {{ .Values.servicePorts.gateway }}
           - path: /
             pathType: Prefix
             backend:

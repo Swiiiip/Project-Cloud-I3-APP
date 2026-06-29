@@ -226,7 +226,7 @@ def main() -> int:
         os.environ["SMOKE_STRESS_CONCURRENCY"] = "8"
         os.environ["SMOKE_STRESS_MAX_ERROR_RATE"] = "0.03"
         os.environ["SMOKE_STRESS_P95_MAX_SECONDS"] = "3.0"
-        os.environ["SMOKE_REDIS_PORT"] = "6379"
+        os.environ["SMOKE_GAME_STATE_STORAGE_PORT"] = "6379"
 
         import sys
 

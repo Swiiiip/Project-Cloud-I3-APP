@@ -1,0 +1,25 @@
+global:
+  imagePullPolicy: IfNotPresent
+
+replicas:
+  gateway: 1
+  gameEngine: 1
+  emojiCatalog: 1
+  emojiRender: 1
+  frontend: 1
+
+ingress:
+  host: localhost
+  tlsSecretName: ""
+
+config:
+  challengeStorageBackend: file
+
+infra:
+  gameStateStorage:
+    enabled: false
+  fileStorage:
+    enabled: true
+
+secrets:
+  sessionCookieSecret: dev-secret

@@ -17,6 +17,15 @@ class GameClient:
         self._session = requests.Session()
         self._request_timeout_seconds = request_timeout_seconds
 
+    def close(self) -> None:
+        self._session.close()
+
+    def __enter__(self) -> "GameClient":
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.close()
+
     def create_daily_challenge(self) -> ChallengeState:
         url = f"{self._base_url}/api/v1/daily/start"
         response = self._session.get(url, timeout=self._request_timeout_seconds)

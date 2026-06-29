@@ -1,21 +1,23 @@
+{{- if .Values.infra.gameStateStorage.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "blurmoji.fullname" . }}-redis
+  name: {{ include "blurmoji.fullname" . }}-game-state-storage
   namespace: {{ .Values.global.namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ include "blurmoji.fullname" . }}-redis
+      app: {{ include "blurmoji.fullname" . }}-game-state-storage
   template:
     metadata:
       labels:
-        app: {{ include "blurmoji.fullname" . }}-redis
+        app: {{ include "blurmoji.fullname" . }}-game-state-storage
     spec:
       containers:
-        - name: redis
-          image: {{ include "blurmoji.redisImage" . }}
+        - name: game-state-storage
+          image: {{ include "blurmoji.gameStateStorageImage" . }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           ports:
-            - containerPort: {{ .Values.servicePorts.redis }}
+            - containerPort: {{ .Values.servicePorts.gameStateStorage }}
+{{- end }}

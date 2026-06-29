@@ -5,9 +5,6 @@ metadata:
   namespace: {{ .Values.global.namespace }}
 data:
   CHALLENGE_STORAGE_BACKEND: {{ .Values.config.challengeStorageBackend | quote }}
-  REDIS_HOST: "{{ include "blurmoji.fullname" . }}-redis"
-  REDIS_PORT: {{ .Values.servicePorts.redis | quote }}
-  REDIS_DB: {{ .Values.config.redisDb | quote }}
-  REDIS_TTL_SECONDS: {{ .Values.config.redisTtlSeconds | quote }}
-
-
+  {{- if .Values.infra.gameStateStorage.enabled }}
+  GAME_STATE_STORAGE_HOST: "{{ include "blurmoji.fullname" . }}-game-state-storage"
+  {{- end }}

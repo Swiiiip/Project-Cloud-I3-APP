@@ -6,7 +6,7 @@ images:
   app:
     repository: blurmoji
     tag: "1.0"
-  redis:
+  gameStateStorage:
     repository: redis
     tag: "7-alpine"
   curl:
@@ -15,33 +15,33 @@ images:
 
 servicePorts:
   gateway: 8000
-  game: 8010
-  catalog: 8020
-  render: 8030
+  gameEngine: 8010
+  emojiCatalog: 8020
+  emojiRender: 8030
   frontend: 8001
-  redis: 6379
+  gameStateStorage: 6379
 
 replicas:
   gateway: 1
-  game: 1
-  catalog: 1
-  render: 1
+  gameEngine: 1
+  emojiCatalog: 1
+  emojiRender: 1
   frontend: 1
 
 ingress:
   enabled: true
   className: nginx
-  host: blurmoji.local
+  host: localhost
   tlsSecretName: ""
 
 config:
-  bindHost: "0.0.0.0"
-  internalHttpTimeoutSeconds: "30"
-  dailyChallengeMaxGuesses: "5"
-  emojiKitchenMetadataUrl: "https://raw.githubusercontent.com/xsalazar/emoji-kitchen-backend/main/app/metadata.json"
-  challengeStorageBackend: "redis"
-  redisDb: "0"
-  redisTtlSeconds: "172800"
+  challengeStorageBackend: game_state_storage
+
+infra:
+  gameStateStorage:
+    enabled: true
+  fileStorage:
+    enabled: false
 
 secrets:
   sessionCookieSecret: change-me
@@ -52,3 +52,5 @@ cron:
   emojiSync:
     schedule: "0 */12 * * *"
 
+tests:
+  enabled: false
