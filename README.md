@@ -2,17 +2,27 @@
 
 Blurmoji is a daily emoji guessing game. Each wrong guess progressively reveals more detail in the challenge image until the player solves the puzzle or runs out of attempts.
 
+See Google Lab progress :
+![](doc/Progress%20Google%20Labs%20-%20Jade%20H.jpeg "Google Lab")
+
+## Gameplay demo
+Feature demo + winning :
+![](doc/demo+win.gif "Feature demo + Winning")
+
+Losing :
+![](doc/lose.gif "Losing")
+
 ## Quick start – Kubernetes
 
 ### 1. Prerequisites
 
-| Tool | Purpose |
-| --- | --- |
-| [Docker](https://docs.docker.com/get-docker/) | Build the application image |
-| [minikube](https://minikube.sigs.k8s.io/docs/start/) | Local Kubernetes cluster |
-| [kubectl](https://kubernetes.io/docs/tasks/tools/) | Inspect and manage workloads |
-| [Helm](https://helm.sh/docs/intro/install/) 3.x | Chart templating (used by helmfile) |
-| [helmfile](https://github.com/helmfile/helmfile#installation) | Environment-based deployments |
+| Tool                                                          | Purpose                             |
+|---------------------------------------------------------------|-------------------------------------|
+| [Docker](https://docs.docker.com/get-docker/)                 | Build the application image         |
+| [minikube](https://minikube.sigs.k8s.io/docs/start/)          | Local Kubernetes cluster            |
+| [kubectl](https://kubernetes.io/docs/tasks/tools/)            | Inspect and manage workloads        |
+| [Helm](https://helm.sh/docs/intro/install/) 3.x               | Chart templating (used by helmfile) |
+| [helmfile](https://github.com/helmfile/helmfile#installation) | Environment-based deployments       |
 
 For running services locally (without Kubernetes):
 
@@ -93,10 +103,12 @@ cp .env.example .env    # optional — .env is already provided
 Start each service in a separate terminal:
 
 ```powershell
-python -m src.services.game_engine.main
 python -m src.services.emoji_catalog.main
+
+# wait for warmup if first run, before executing the rest
 python -m src.services.emoji_render.main
 python -m src.services.gateway.main
+python -m src.services.game_engine.main
 python -m src.frontend.main
 ```
 
