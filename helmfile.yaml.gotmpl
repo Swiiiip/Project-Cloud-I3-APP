@@ -1,0 +1,28 @@
+helmDefaults:
+  createNamespace: true
+  wait: true
+  timeout: 600
+
+environments:
+  dev:
+    values:
+      - environment:
+          name: dev
+  prod:
+    values:
+      - environment:
+          name: prod
+
+---
+
+releases:
+  - name: blurmoji
+    namespace: blurmoji
+    chart: ./chart/blurmoji
+    values:
+      - ./chart/blurmoji/values.yaml
+      {{- if eq .Environment.Name "prod" }}
+      - ./chart/blurmoji/values.prod.yaml
+      {{- end }}
+
+

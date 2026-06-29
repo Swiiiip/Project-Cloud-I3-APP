@@ -10,7 +10,7 @@ Blurmoji is an emoji guessing game where each wrong guess progressively reveals 
 
 ## Deployed architecture
 
-This is the Helm/Kubernetes deployment actually shipped by `src/deploy/helm/blurmoji`. Kubernetes `Service` objects route traffic; the horizontally scaled units are the `Deployment` pods behind them. Scaling is static through Helm values, not through an HPA.
+This is the Helm/Kubernetes deployment shipped by `chart/blurmoji`. Kubernetes `Service` objects route traffic; the horizontally scaled units are the `Deployment` pods behind them. Scaling is static through Helm values, not through an HPA.
 
 ### Mermaid deployment diagram
 
@@ -107,43 +107,6 @@ Notes:
 - Local/dev can use file storage by setting `CHALLENGE_STORAGE_BACKEND=file`.
 - Deployment/prod uses Redis by setting `CHALLENGE_STORAGE_BACKEND=redis` plus `REDIS_*` values.
 
-## Final source layout
-
-```
-Dockerfile
-
-src/
-  services/
-    gateway/
-      app.py
-      internal_client.py
-      main.py
-      session/signed_cookie_session_resolver.py
-    game/
-      app.py
-      main.py
-    emoji_catalog/
-      app.py
-      main.py
-    render/
-      app.py
-      game_service_client.py
-      main.py
-    common/runtime_env.py
-  common/contracts/
-    game_contracts.py
-  deploy/
-    docker/
-      values.yaml
-    helm/blurmoji/
-      Chart.yaml
-      values.yaml
-      values.prod.yaml
-      templates/*.yaml
-  frontend/
-    main.py
-```
-
 ## Environment variables
 
 Use `.env.example` as the reference source of required runtime variables.
@@ -154,6 +117,32 @@ Core groups:
 - Service discovery: `*_BASE_URL`, `INTERNAL_HTTP_TIMEOUT_SECONDS`
 - Frontend: `API_BASE_URL`, `FRONTEND_HOST`, `FRONTEND_PORT`
 - Challenge storage: `CHALLENGE_STORAGE_BACKEND`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_TTL_SECONDS`
+
+## Helmfile deployment
+
+Helmfile is the default workflow.
+
+```powershell
+helmfile --environment dev sync
+```
+
+Production deployment:
+
+```powershell
+helmfile --environment prod sync
+```
+
+If you need to render the chart directly:
+
+```powershell
+helm template blurmoji chart/blurmoji -f chart/blurmoji/values.yaml
+```
+
+Helm chart path: `chart/blurmoji`
+
+Helmfile state file: `helmfile.yaml.gotmpl`
+
+The deployment diagram and scaling table above reflect the chart’s static replica model. Edit `chart/blurmoji/values.yaml` for shared defaults and `chart/blurmoji/values.prod.yaml` for production-only overrides.
 
 ## Run locally (multi-process)
 
@@ -172,55 +161,6 @@ python -m src.frontend.main
 Gateway URL: `http://localhost:8000`  
 Frontend URL: `http://localhost:8001`
 
-## Run with Docker Compose
-
-```powershell
-docker compose -f docker-compose.yml -f src/deploy/docker/values.yaml up --build
-```
-
-This starts:
-- `gateway-api`, `game-service`, `emoji-catalog-service`, `render-service`, `frontend`
-
-Smoke test suite after startup:
-
-```powershell
-python -m src.tests.smoke.run_suite
-```
-
-Run one scenario only:
-
-```powershell
-python -m src.tests.smoke.run_suite --scenario concurrent_sessions
-```
-
-Available scenarios in `src/tests/smoke`:
-- `queue_delay`: confirms queueing pressure can push render latency to 2+ seconds
-- `concurrent_sessions`: validates isolation across 100 concurrent user sessions
-- `gateway_restrictions`: ensures public access goes through gateway only
-- `stress`: mixed endpoint stress profile with error-rate and p95 thresholds
-- `connectivity`: verifies gateway/service health and optionally configured infra connectivity
-
-Compatibility wrapper remains available:
-
-```powershell
-python -m src.smoke_test_split_services
-```
-
-## Kubernetes deployment
-
-Helm chart path: `src/deploy/helm/blurmoji`
-
-The deployment diagram and scaling table above reflect the chart’s static replica model. Edit `src/deploy/helm/blurmoji/values.yaml` for defaults or `src/deploy/helm/blurmoji/values.prod.yaml` for the production-like override.
-
-```powershell
-helm upgrade --install blurmoji src/deploy/helm/blurmoji --create-namespace
-```
-
-Production-like override:
-
-```powershell
-helm upgrade --install blurmoji src/deploy/helm/blurmoji -f src/deploy/helm/blurmoji/values.prod.yaml --create-namespace
-```
 
 ## Smoke tests in isolated pods
 
