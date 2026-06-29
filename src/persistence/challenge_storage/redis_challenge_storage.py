@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class RedisChallengeStorage(AbstractChallengeStorage):
-    def __init__(self, host: str, port: int, db: int, ttl: int):
-        self._client = redis.Redis(host=host, port=port, db=db, decode_responses=True)
+    def __init__(self, host: str, port: int, ttl: int):
+        self._client = redis.Redis(host=host, port=port, decode_responses=True)
         self._ttl = ttl
         self._client.ping()
 

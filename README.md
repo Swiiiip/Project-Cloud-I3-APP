@@ -1,199 +1,296 @@
 # Blurmoji
 
-Blurmoji is an emoji guessing game where each wrong guess progressively reveals more image detail until the player solves the daily challenge.
+Blurmoji is a daily emoji guessing game. Each wrong guess progressively reveals more detail in the challenge image until the player solves the puzzle or runs out of attempts.
 
-## Gameplay behavior
-- Daily challenge with a fixed max attempts count
-- Session-scoped progression keyed by `session_id` cookie
-- `/render` returns blurred or full image depending on current game state
-- Emoji picker is driven by grouped Emoji Kitchen metadata
+## Quick start – Kubernetes
 
-## Deployed architecture
+### 1. Prerequisites
 
-This is the Helm/Kubernetes deployment shipped by `chart/blurmoji`. Kubernetes `Service` objects route traffic; the horizontally scaled units are the `Deployment` pods behind them. Scaling is static through Helm values, not through an HPA.
+| Tool | Purpose |
+| --- | --- |
+| [Docker](https://docs.docker.com/get-docker/) | Build the application image |
+| [minikube](https://minikube.sigs.k8s.io/docs/start/) | Local Kubernetes cluster |
+| [kubectl](https://kubernetes.io/docs/tasks/tools/) | Inspect and manage workloads |
+| [Helm](https://helm.sh/docs/intro/install/) 3.x | Chart templating (used by helmfile) |
+| [helmfile](https://github.com/helmfile/helmfile#installation) | Environment-based deployments |
 
-### Mermaid deployment diagram
+For running services locally (without Kubernetes):
 
-```mermaid
-flowchart TB
-    user((Player / Browser))
+| Tool        | Purpose                    |
+|-------------|----------------------------|
+| Python 3.12 | Application runtime        |
+| pip         | Install `requirements.txt` |
 
-    subgraph public["Public edge"]
-        ingress["Ingress\n<release>-ingress\nhost: blurmoji.local / blurmoji.example.com"]
-        frontendSvc["Service: <release>-frontend"]
-        gatewaySvc["Service: <release>-gateway"]
-    end
+### 2. Start minikube
 
-    subgraph routing["Internal ClusterIP services"]
-        gameSvc["Service: <release>-game"]
-        catalogSvc["Service: <release>-catalog"]
-        renderSvc["Service: <release>-render"]
-    end
-
-    subgraph app["Application Deployments"]
-        frontend["frontend Deployment\n1 replica default / 2 replicas prod"]
-        gateway["gateway Deployment\n1 replica default / 3 replicas prod"]
-        game["game Deployment\n1 replica default / 2 replicas prod"]
-        catalog["catalog Deployment\n1 replica default / 2 replicas prod"]
-        render["render Deployment\n1 replica default / 2 replicas prod"]
-    end
-
-    subgraph state["State, assets, and fixed infrastructure"]
-        challengeStore["Challenge state storage\nbackend: redis (deployment) / file (local)"]
-        emojiCache["Emoji metadata cache\nemojis.json"]
-        redis["redis Deployment\n1 replica fixed"]
-    end
-
-    subgraph jobs["Scheduled jobs"]
-        precompute["CronJob: daily-precompute"]
-        emojiSync["CronJob: emoji-sync"]
-    end
-
-    user --> ingress
-    ingress --> frontendSvc --> frontend
-    ingress --> gatewaySvc --> gateway
-
-    frontend --> gatewaySvc
-    gateway --> gameSvc
-    gateway --> catalogSvc
-    gateway --> renderSvc
-    render --> gameSvc
-
-    gameSvc --> game
-    catalogSvc --> catalog
-    renderSvc --> render
-
-    game --> challengeStore
-    catalog --> emojiCache
-
-    precompute --> game
-    emojiSync --> catalog
+```powershell
+minikube start
+minikube status          # apiserver must be Running, kubeconfig Configured
+kubectl cluster-info
+minikube addons enable ingress
 ```
 
-### Retrospective scaling model
+### 3. Build and load the image
 
-| Component | Kubernetes kind | Default replicas (`values.yaml`) | Production replicas (`values.prod.yaml`) | Scaling mode |
-| --- | --- | ---: | ---: | --- |
-| `gateway` | Deployment | 1 | 3 | horizontally scaled stateless app tier |
-| `game` | Deployment | 1 | 2 | horizontally scaled stateless app tier |
-| `catalog` | Deployment | 1 | 2 | horizontally scaled stateless app tier |
-| `render` | Deployment | 1 | 2 | horizontally scaled stateless app tier |
-| `frontend` | Deployment | 1 | 2 | horizontally scaled UI tier |
-| `redis` | Deployment | 1 | 1 | fixed singleton support service |
-| `Ingress`, `Service`, `ConfigMap`, `Secret`, `CronJob` | control/routing/storage objects | n/a | n/a | not horizontally scaled |
+```powershell
+docker build -t blurmoji:1.0 .
+minikube image load blurmoji:1.0
+```
 
-Notes:
-- The chart has no HPA/KEDA; replica counts are static Helm values.
-- `Service` objects provide stable DNS/port routing only.
-- Configuration is split by concern: runtime settings in `*-runtime-config`, storage backend settings in `*-storage-config`, and secrets in `*-secret`.
-- Deployment challenge state uses Redis (`CHALLENGE_STORAGE_BACKEND=redis`); file-backed state (`CHALLENGE_STORAGE_BACKEND=file`) is retained for local testing.
+Rebuild and reload after every code change before redeploying.
 
-## Why this deployment is shaped this way
+### 4. Deploy with Helmfile
 
-### Stateless app tiers scale horizontally
-- `gateway`, `game`, `catalog`, `render`, and `frontend` are independent Deployments.
-- Default chart replicas are `1`; production override raises them to `3/2/2/2/2`.
-- There is no HPA, so the replica count is intentionally explicit in Helm values.
-
-### Fixed infrastructure stays singleton
-- `redis` stays at `1` replica in the current chart.
-
-### Runtime config is split by concern
-- `*-runtime-config` carries service URLs, ports, and timeouts.
-- `*-storage-config` carries `CHALLENGE_STORAGE_BACKEND` and backend-specific settings.
-- `*-secret` carries sensitive values.
-
-### Storage backend is explicit by environment
-- Local/dev can use file storage by setting `CHALLENGE_STORAGE_BACKEND=file`.
-- Deployment/prod uses Redis by setting `CHALLENGE_STORAGE_BACKEND=redis` plus `REDIS_*` values.
-
-## Environment variables
-
-Use `.env.example` as the reference source of required runtime variables.
-
-Core groups:
-- Gateway edge: `API_HOST`, `API_PORT`, `SESSION_COOKIE_SECRET`
-- Internal services: `GAME_SERVICE_*`, `CATALOG_SERVICE_*`, `RENDER_SERVICE_*`
-- Service discovery: `*_BASE_URL`, `INTERNAL_HTTP_TIMEOUT_SECONDS`
-- Frontend: `API_BASE_URL`, `FRONTEND_HOST`, `FRONTEND_PORT`
-- Challenge storage: `CHALLENGE_STORAGE_BACKEND`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_TTL_SECONDS`
-
-## Helmfile deployment
-
-Helmfile is the default workflow.
+Helm values dictate environments.
+| Environment | Command                            | Config source                      | Storage        |
+|-------------|------------------------------------|------------------------------------|----------------|
+| **dev**     | `helmfile --environment dev sync`  | `values.yaml` + `values.dev.yaml`  | File           |
+| **prod**    | `helmfile --environment prod sync` | `values.yaml` + `values.prod.yaml` | Redis + Secret |
 
 ```powershell
 helmfile --environment dev sync
-```
-
-Production deployment:
-
-```powershell
+# or
 helmfile --environment prod sync
 ```
 
-If you need to render the chart directly:
+### 5. Accessing the app
 
+In a new terminal, start the tunnel and keep it open:
 ```powershell
-helm template blurmoji chart/blurmoji -f chart/blurmoji/values.yaml
+minikube tunnel
 ```
 
-Helm chart path: `chart/blurmoji`
+Fetch host with:
+```powershell
+kubectl get ingress -n blurmoji
+```
 
-Helmfile state file: `helmfile.yaml.gotmpl`
+Then open in your browser. It is **http://localhost** by default with local `minikube`.
 
-The deployment diagram and scaling table above reflect the chart’s static replica model. Edit `chart/blurmoji/values.yaml` for shared defaults and `chart/blurmoji/values.prod.yaml` for production-only overrides.
+### 6. Clean up
 
-## Run locally (multi-process)
-
-1) Install dependencies.
-2) Configure `.env` from `.env.example`.
-3) Start each service in a separate terminal.
+Remove the release and namespace:
 
 ```powershell
-python -m src.services.game.main
+helmfile --environment dev destroy
+# or
+helmfile --environment prod destroy
+```
+
+---
+
+## Quick start - local run
+
+Equivalent to the **dev** Helm environment. Configuration comes from `.env` (same values as `values.dev.yaml`, but with `localhost` URLs).
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+cp .env.example .env    # optional — .env is already provided
+```
+
+Start each service in a separate terminal:
+
+```powershell
+python -m src.services.game_engine.main
 python -m src.services.emoji_catalog.main
-python -m src.services.render.main
+python -m src.services.emoji_render.main
 python -m src.services.gateway.main
 python -m src.frontend.main
 ```
 
-Gateway URL: `http://localhost:8000`  
-Frontend URL: `http://localhost:8001`
+| Service     | URL                   |
+|-------------|-----------------------|
+| Frontend    | http://localhost:8001 |
+| Gateway API | http://localhost:8000 |
 
+---
 
-## Smoke tests in isolated pods
+## Configuration model
 
-Each smoke scenario can run in its own pod/job using manifests in `src/deploy/k8s/tests`.
+There is a single configuration path: **each service reads only the env vars it needs** from the process environment. `.env` is loaded automatically for local runs.
 
-Build the test image:
+| Where you run                     | Type            | Source             |
+|-----------------------------------|-----------------|--------------------|
+| `python -m ...` on host           | Local .Env File | `.env`             |
+| `helmfile --environment dev ...`  | Helm Value File | `values.dev.yaml`  |
+| `helmfile --environment prod ...` | Helm Value File | `values.prod.yaml` |
 
-```powershell
-docker build -t blurmoji/tests:latest .
+Ports, timeouts, game rules, and Redis DB/TTL are hardcoded in `src/config/constants.py` and are not env vars.
+
+---
+
+## Architecture overview
+
+```mermaid
+flowchart TB
+    Browser(["Browser"])
+
+    subgraph public["Client-accessible boundary"]
+        Ingress["Ingress\nnginx :80/443"]
+        Frontend["frontend\nNiceGUI :8001"]
+    end
+
+    subgraph internal["Cluster-internal services"]
+        Gateway["gateway\nFastAPI :8000"]
+        GameEngine["game_engine\nFastAPI :8010"]
+        EmojiCatalog["emoji_catalog\nFastAPI :8020"]
+        EmojiRender["emoji_render\nFastAPI :8030"]
+    end
+
+    subgraph infra["Infrastructure"]
+        Redis[("game_state_storage\nRedis :6379")]
+        FileVol[("file storage\n/data/challenge_storage.json")]
+    end
+
+    subgraph cron["Scheduled jobs"]
+        Precompute["daily-precompute\nCronJob"]
+        EmojiSync["emoji-sync\nCronJob"]
+    end
+
+    Browser -->|"HTTP"| Ingress
+    Ingress -->|"HTTP"| Frontend
+    Frontend -->|"HTTP REST\n/api/v1/daily/*"| Gateway
+    Gateway -->|"HTTP REST\n/internal/game_engine/*"| GameEngine
+    Gateway -->|"HTTP REST\n/internal/emoji_catalog/*"| EmojiCatalog
+    Gateway -->|"HTTP GET\n/internal/emoji_render/image"| EmojiRender
+    EmojiRender -->|"HTTP GET\n/internal/game_engine/status"| GameEngine
+    GameEngine -->|"Redis protocol"| Redis
+    GameEngine -->|"JSON file I/O"| FileVol
+    Precompute -->|"HTTP GET"| GameEngine
+    EmojiSync -->|"HTTP GET"| EmojiCatalog
 ```
 
-Apply isolated test jobs:
+### Components
 
-```powershell
-kubectl apply -f src/deploy/k8s/tests/configmap.yaml
-kubectl apply -f src/deploy/k8s/tests/job-queue-delay.yaml
-kubectl apply -f src/deploy/k8s/tests/job-concurrent-sessions.yaml
-kubectl apply -f src/deploy/k8s/tests/job-gateway-restrictions.yaml
-kubectl apply -f src/deploy/k8s/tests/job-stress.yaml
-kubectl apply -f src/deploy/k8s/tests/job-connectivity.yaml
+| Component            | Role                                                       | Scope             | Protocol                | K8s resource                         |
+|----------------------|------------------------------------------------------------|-------------------|-------------------------|--------------------------------------|
+| `frontend`           | NiceGUI UI, session view state                             | External          | HTTP (WebSocket for UI) | Deployment, Service, Ingress backend |
+| `gateway`            | Public REST API, signed session cookies, request routing   | Internal/External | HTTP REST               | Deployment, Service                  |
+| `game_engine`        | Daily challenge logic, guess processing, state persistence | Internal          | HTTP REST               | Deployment, Service                  |
+| `emoji_catalog`      | Emoji Kitchen metadata, grouped keyboard payload           | Internal          | HTTP REST               | Deployment, Service                  |
+| `emoji_render`       | Image fetch, progressive blur, PNG response                | Internal          | HTTP (PNG body)         | Deployment, Service                  |
+| `game_state_storage` | Shared challenge state (prod)                              | Internal          | Redis protocol          | Deployment, Service                  |
+| file storage         | Ephemeral challenge state (dev)                            | Internal          | File I/O                | `emptyDir` on `game_engine`          |
+| `daily-precompute`   | Warms daily challenge path                                 | Internal          | HTTP GET via curl       | CronJob                              |
+| `emoji-sync`         | Validates catalog availability                             | Internal          | HTTP GET via curl       | CronJob                              |
+| Ingress              | Routes root `/` to frontend                                | Public edge       | HTTP / HTTPS            | Ingress                              |
+
+### Accessibility boundary
+
+| Accessible from browser | Internal only                                                                   |
+|-------------------------|---------------------------------------------------------------------------------|
+| `frontend` via Ingress  | `gateway`, `game_engine`, `emoji_catalog`, `emoji_render`, `game_state_storage` |
+
+---
+
+## Request sequence (PlantUML)
+
+```plantuml
+@startuml blurmoji-sequence
+!theme plain
+skinparam responseMessageBelowArrow true
+
+actor Browser as client
+box "Public boundary" #E8F4FD
+  participant "frontend\n(NiceGUI :8001)" as fe
+  participant "Ingress\n(nginx)" as ing
+end box
+box "Internal services" #FFF8E8
+  participant "gateway\n(FastAPI :8000)" as gw
+  participant "game_engine\n(FastAPI :8010)" as ge
+  participant "emoji_catalog\n(FastAPI :8020)" as ec
+  participant "emoji_render\n(FastAPI :8030)" as er
+end box
+box "Infrastructure" #F0F0F0
+  database "game_state_storage\n(Redis :6379)" as redis
+end box
+
+== Page load ==
+client -> ing : HTTP GET /
+ing -> fe : HTTP GET /
+fe -> gw : HTTP GET /api/v1/daily/supported_emojis\n(Cookie: session_id)
+gw -> ec : HTTP GET /internal/emoji_catalog/supported_emojis
+ec --> gw : JSON { categories }
+gw --> fe : JSON { categories }
+
+== Start daily challenge ==
+fe -> gw : HTTP GET /api/v1/daily/start\n(Cookie: session_id)
+gw -> gw : resolve / sign session cookie
+gw -> ge : HTTP GET /internal/game_engine/start?session_id=...
+ge -> redis : Redis GET/SET\n(prod only)
+ge --> gw : JSON ChallengeState
+gw --> fe : JSON ChallengeState
+
+== Render blurred image ==
+fe -> gw : HTTP GET /api/v1/daily/render\n(Cookie: session_id)
+gw -> er : HTTP GET /internal/emoji_render/image?session_id=...
+er -> ge : HTTP GET /internal/game_engine/status?session_id=...
+ge --> er : JSON ChallengeState
+er -> er : fetch + blur image
+er --> gw : HTTP 200 image/png
+gw --> fe : HTTP 200 image/png
+fe --> client : display image
+
+== Submit guess ==
+fe -> gw : HTTP POST /api/v1/daily/guess\nJSON + Cookie
+gw -> ge : HTTP POST /internal/game_engine/guess
+ge -> redis : Redis SET state\n(prod only)
+ge --> gw : JSON ChallengeState
+gw --> fe : JSON ChallengeState
+
+@enduml
 ```
 
-## Cron workloads included
-- Daily precompute cron: warms daily challenge path by calling `game-service`
-- Emoji sync cron: refreshes/validates catalog path by calling `emoji-catalog-service`
+---
 
-## API contract (public)
-- `GET /api/v1/daily/start`
-- `POST /api/v1/daily/guess`
-- `GET /api/v1/daily/get_status`
-- `GET /api/v1/daily/render`
-- `GET /api/v1/daily/supported_emojis`
+## Public API
 
-Payload conventions are preserved:
-- `keyboardPosition` for emoji payload entries
-- `resultImageUrl` for emoji combination assets
+| Method | Path                             | Description                           |
+|--------|----------------------------------|---------------------------------------|
+| `GET`  | `/api/v1/daily/start`            | Start or resume daily challenge       |
+| `POST` | `/api/v1/daily/guess`            | Submit emoji couple guess             |
+| `GET`  | `/api/v1/daily/get_status`       | Current challenge state               |
+| `GET`  | `/api/v1/daily/render`           | Blurred or full challenge image (PNG) |
+| `GET`  | `/api/v1/daily/supported_emojis` | Grouped emoji keyboard metadata       |
+
+---
+
+## Cron workloads
+
+| CronJob            | Schedule       | Target                                                     |
+|--------------------|----------------|------------------------------------------------------------|
+| `daily-precompute` | `0 0 * * *`    | `game_engine` `/internal/game_engine/start`                |
+| `emoji-sync`       | `0 */12 * * *` | `emoji_catalog` `/internal/emoji_catalog/supported_emojis` |
+
+---
+
+## Project layout
+
+```
+Blurmoji root project
+├── .env.example                 # .env guideline to be duplicated as .env for local runs
+├── helmfile.yaml.gotmpl         # Entrypoint to deploy in dev or prod
+├── Dockerfile
+├── requirements.txt
+├── chart/blurmoji/
+│   ├── values.yaml              # Shared defaults
+│   ├── values.dev.yaml          # File storage, single replicas
+│   ├── values.prod.yaml         # Redis, secrets, higher replicas
+│   └── templates/               # K8s manifests 
+└── src/
+    ├── config/
+    │   ├── constants.py         # Ports, timeouts, game rules
+    │   ├── settings.py          # Config dataclasses
+    │   └── loader.py            # Per-service env var loaders
+    ├── core/                    # Domain logic
+    ├── frontend/
+    ├── persistence/
+    ├── services/
+    │   ├── gateway/
+    │   ├── game_engine/
+    │   ├── emoji_catalog/
+    │   └── emoji_render/
+    └── utils/
+```

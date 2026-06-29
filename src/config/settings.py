@@ -21,9 +21,5 @@ class StorageSettings:
         return ServicePorts.GAME_STATE_STORAGE
 
     @property
-    def game_state_storage_db(self) -> int:
-        return GameStateStorage.DB
-
-    @property
-    def game_state_storage_ttl_seconds(self) -> int:
+    def game_state_ttl_seconds(self) -> int:
         return GameStateStorage.TTL_SECONDS

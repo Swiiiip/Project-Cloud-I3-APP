@@ -21,6 +21,10 @@ servicePorts:
   frontend: 8001
   gameStateStorage: 6379
 
+services:
+  frontend:
+    type: ClusterIP
+
 replicas:
   gateway: 1
   gameEngine: 1

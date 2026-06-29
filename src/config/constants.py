@@ -27,7 +27,6 @@ class EmojiKitchen:
 
 
 class GameStateStorage:
-    DB = 0
     TTL_SECONDS = 172800
 
 

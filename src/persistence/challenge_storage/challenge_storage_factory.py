@@ -12,8 +12,8 @@ class ChallengeStorageFactory:
         return FileChallengeStorage(file_path)
 
     @staticmethod
-    def create_game_state_storage(host: str, port: int, db: int, ttl: int) -> AbstractChallengeStorage:
-        return RedisChallengeStorage(host=host, port=port, db=db, ttl=ttl)
+    def create_game_state_storage(host: str, port: int, ttl: int) -> AbstractChallengeStorage:
+        return RedisChallengeStorage(host=host, port=port, ttl=ttl)
 
     @staticmethod
     def create_in_memory() -> AbstractChallengeStorage:

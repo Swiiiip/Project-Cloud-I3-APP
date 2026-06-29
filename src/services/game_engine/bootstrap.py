@@ -20,8 +20,7 @@ class GameEngineBootstrap:
             return ChallengeStorageFactory.create_game_state_storage(
                 host=host,
                 port=storage.game_state_storage_port,
-                db=storage.game_state_storage_db,
-                ttl=storage.game_state_storage_ttl_seconds,
+                ttl=storage.game_state_ttl_seconds,
             )
         if backend == ChallengeStorageBackend.IN_MEMORY:
             return ChallengeStorageFactory.create_in_memory()

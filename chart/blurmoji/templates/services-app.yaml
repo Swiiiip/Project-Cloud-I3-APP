@@ -52,6 +52,7 @@ metadata:
   name: {{ include "blurmoji.fullname" . }}-frontend
   namespace: {{ .Values.global.namespace }}
 spec:
+  type: {{ .Values.services.frontend.type }}
   selector:
     app: {{ include "blurmoji.fullname" . }}-frontend
   ports:
