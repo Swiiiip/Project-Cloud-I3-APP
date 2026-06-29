@@ -3,7 +3,6 @@ import random
 import threading
 from datetime import date
 
-from src.config import Config
 from src.core.emoji.dto.combination_data import CombinationData
 from src.core.emoji.dto.emoji_couple import EmojiCodepointCouple, EmojiDataCouple
 from src.core.gameplay.dto.challenge_answer import ChallengeAnswer
@@ -11,6 +10,7 @@ from src.core.gameplay.dto.challenge_state import ChallengeState
 from src.core.gameplay.dto.guess_slot_match import GuessSlotMatch
 from src.core.emoji.emoji_kitchen import EmojiKitchenService
 from src.persistence.challenge_storage.abstract_challenge_storage import AbstractChallengeStorage
+from src.utils.runtime_env import RuntimeEnv
 
 logger = logging.Logger(__name__)
 
@@ -40,7 +40,7 @@ class DailyChallengeService:
                                            result_image_url=daily_combination.result_image_url)
             state = ChallengeState(answer=daily_answer,
                                    attempts=0,
-                                   max_attempts=Config.DAILY_CHALLENGE_MAX_GUESSES,
+                                   max_attempts=RuntimeEnv.require_int("DAILY_CHALLENGE_MAX_GUESSES"),
                                    is_completed=False,
                                    past_guesses=(),
                                    past_guess_matches=())

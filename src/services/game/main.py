@@ -1,6 +1,5 @@
 import uvicorn
 from dotenv import load_dotenv
-from pathlib import Path
 
 from src.persistence.challenge_storage.challenge_storage_factory import ChallengeStorageFactory
 from src.services.game.app import create_app
@@ -15,7 +14,7 @@ def main() -> None:
 
     backend = RuntimeEnv.require_str("CHALLENGE_STORAGE_BACKEND").strip().lower()
     if backend == "file":
-        challenge_storage = ChallengeStorageFactory.create_file(Path(RuntimeEnv.require_str("CHALLENGE_STORAGE_FILE_PATH")))
+        challenge_storage = ChallengeStorageFactory.create_file(PathHandler.root_dir() / "challenge_storage.json")
     elif backend == "redis":
         challenge_storage = ChallengeStorageFactory.create_redis(
             host=RuntimeEnv.require_str("REDIS_HOST"),

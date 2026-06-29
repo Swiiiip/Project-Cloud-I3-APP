@@ -2,7 +2,16 @@ global:
   namespace: blurmoji
   imagePullPolicy: Always
 
-images: blurmoji:1.0
+images:
+  app:
+    repository: blurmoji
+    tag: "1.0"
+  redis:
+    repository: redis
+    tag: "7-alpine"
+  curl:
+    repository: curlimages/curl
+    tag: "8.11.1"
 
 servicePorts:
   gateway: 8000
@@ -26,9 +35,11 @@ ingress:
   tlsSecretName: blurmoji-tls
 
 config:
+  bindHost: "0.0.0.0"
   internalHttpTimeoutSeconds: "30"
+  dailyChallengeMaxGuesses: "5"
+  emojiKitchenMetadataUrl: "https://raw.githubusercontent.com/xsalazar/emoji-kitchen-backend/main/app/metadata.json"
   challengeStorageBackend: "redis"
-  challengeStorageFilePath: "/app/daily.json"
   redisDb: "0"
   redisTtlSeconds: "172800"
 

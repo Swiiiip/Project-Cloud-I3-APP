@@ -4,12 +4,12 @@ from typing import Any
 
 import requests
 
-from src.config import Config
 from src.core.emoji.dto.combination_data import CombinationData
 from src.core.emoji.dto.emoji_couple import EmojiDataCouple
 from src.core.emoji.dto.emoji_data import EmojiData
 from src.core.emoji.dto.unit_data import UnitData
 from src.persistence.emoji_repository.abstract_emoji_repository import AbstractEmojiRepository
+from src.utils.runtime_env import RuntimeEnv
 
 logger = logging.getLogger(__name__)
 UNKNOWN_TAXONOMY_LABEL = "Unknown"
@@ -46,8 +46,8 @@ class EmojiDataPopulator:
 
     @staticmethod
     def _fetch_raw_emoji_kitchen_metadata() -> dict[str, Any]:
-        response = requests.get(url=Config.EMOJI_KITCHEN_METADATA_URL,
-                                timeout=Config.REQUEST_TIMEOUT_SECONDS)
+        response = requests.get(url=RuntimeEnv.require_str("EMOJI_KITCHEN_METADATA_URL"),
+                                timeout=RuntimeEnv.require_int("INTERNAL_HTTP_TIMEOUT_SECONDS"))
         response.raise_for_status()
         full_json = response.json()
         return full_json.get("data", {})

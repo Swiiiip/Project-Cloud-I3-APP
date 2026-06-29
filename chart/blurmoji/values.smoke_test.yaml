@@ -13,7 +13,6 @@ x-env:
     GAME_SERVICE_HOST: 0.0.0.0
     GAME_SERVICE_PORT: "8010"
     CHALLENGE_STORAGE_BACKEND: file
-    CHALLENGE_STORAGE_FILE_PATH: /app/daily.json
     HEALTHCHECK_HOST: 127.0.0.1
 
   catalog: &env_catalog

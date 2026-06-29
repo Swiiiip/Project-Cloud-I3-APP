@@ -1,16 +1,12 @@
+x-smoke-base: &smoke-base
+  build:
+    context: .
+
 services:
   gateway-api:
     build:
       context: .
-      dockerfile: src/deploy/docker/Dockerfile.gateway
-    environment:
-      - API_HOST=0.0.0.0
-      - API_PORT=8000
-      - GAME_SERVICE_BASE_URL=http://game-service:8010
-      - CATALOG_SERVICE_BASE_URL=http://emoji-catalog-service:8020
-      - RENDER_SERVICE_BASE_URL=http://render-service:8030
-      - INTERNAL_HTTP_TIMEOUT_SECONDS=30
-      - SESSION_COOKIE_SECRET=${SESSION_COOKIE_SECRET}
+    command: ["python", "-m", "src.services.gateway.main"]
     ports:
       - "8000:8000"
     depends_on:
@@ -20,8 +16,16 @@ services:
         condition: service_started
       render-service:
         condition: service_started
+    environment:
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      SESSION_COOKIE_SECRET: "replace-me"
+      GAME_SERVICE_BASE_URL: "http://game-service:8010"
+      CATALOG_SERVICE_BASE_URL: "http://emoji-catalog-service:8020"
+      RENDER_SERVICE_BASE_URL: "http://render-service:8030"
+      INTERNAL_HTTP_TIMEOUT_SECONDS: "30"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()"]
+      test: ["CMD-SHELL", "python -c \"import os, urllib.request; host = os.environ['HEALTHCHECK_HOST']; port = os.environ['API_PORT']; urllib.request.urlopen(f'http://{host}:{port}/health', timeout=2).read()\""]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -30,20 +34,13 @@ services:
   game-service:
     build:
       context: .
-      dockerfile: src/deploy/docker/Dockerfile.game
+    command: ["python", "-m", "src.services.game.main"]
     environment:
-      - GAME_SERVICE_HOST=0.0.0.0
-      - GAME_SERVICE_PORT=8010
-      - CHALLENGE_STORAGE_BACKEND=redis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=0
-      - REDIS_TTL_SECONDS=172800
-    depends_on:
-      redis:
-        condition: service_started
+      GAME_SERVICE_HOST: "0.0.0.0"
+      GAME_SERVICE_PORT: "8010"
+      CHALLENGE_STORAGE_BACKEND: "file"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8010/internal/game/health', timeout=2).read()"]
+      test: ["CMD-SHELL", "python -c \"import os, urllib.request; host = os.environ['HEALTHCHECK_HOST']; port = os.environ['GAME_SERVICE_PORT']; urllib.request.urlopen(f'http://{host}:{port}/internal/game/health', timeout=2).read()\""]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -52,12 +49,12 @@ services:
   emoji-catalog-service:
     build:
       context: .
-      dockerfile: src/deploy/docker/Dockerfile.catalog
+    command: ["python", "-m", "src.services.emoji_catalog.main"]
     environment:
-      - CATALOG_SERVICE_HOST=0.0.0.0
-      - CATALOG_SERVICE_PORT=8020
+      CATALOG_SERVICE_HOST: "0.0.0.0"
+      CATALOG_SERVICE_PORT: "8020"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8020/internal/catalog/health', timeout=2).read()"]
+      test: ["CMD-SHELL", "python -c \"import os, urllib.request; host = os.environ['HEALTHCHECK_HOST']; port = os.environ['CATALOG_SERVICE_PORT']; urllib.request.urlopen(f'http://{host}:{port}/internal/catalog/health', timeout=2).read()\""]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -66,17 +63,18 @@ services:
   render-service:
     build:
       context: .
-      dockerfile: src/deploy/docker/Dockerfile.render
+    command: ["python", "-m", "src.services.render.main"]
     environment:
-      - RENDER_SERVICE_HOST=0.0.0.0
-      - RENDER_SERVICE_PORT=8030
-      - GAME_SERVICE_BASE_URL=http://game-service:8010
-      - INTERNAL_HTTP_TIMEOUT_SECONDS=30
+      RENDER_SERVICE_HOST: "0.0.0.0"
+      RENDER_SERVICE_PORT: "8030"
+      GAME_SERVICE_BASE_URL: "http://game-service:8010"
+      INTERNAL_HTTP_TIMEOUT_SECONDS: "30"
+      DAILY_CHALLENGE_MAX_GUESSES: 5
     depends_on:
       game-service:
         condition: service_started
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8030/internal/render/health', timeout=2).read()"]
+      test: ["CMD-SHELL", "python -c \"import os, urllib.request; host = os.environ['HEALTHCHECK_HOST']; port = os.environ['RENDER_SERVICE_PORT']; urllib.request.urlopen(f'http://{host}:{port}/internal/render/health', timeout=2).read()\""]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -85,180 +83,19 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: src/deploy/docker/Dockerfile.frontend
-    environment:
-      - API_BASE_URL=http://gateway-api:8000
-      - FRONTEND_HOST=0.0.0.0
-      - FRONTEND_PORT=8001
+    command: ["python", "-m", "src.frontend.main"]
     ports:
       - "8001:8001"
     depends_on:
       gateway-api:
         condition: service_started
+    environment:
+      API_BASE_URL: "http://gateway-api:8000"
+      FRONTEND_HOST: "0.0.0.0"
+      FRONTEND_PORT: "8001"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/', timeout=2).read()"]
+      test: ["CMD-SHELL", "python -c \"import os, urllib.request; host = os.environ['HEALTHCHECK_HOST']; port = os.environ['FRONTEND_PORT']; urllib.request.urlopen(f'http://{host}:{port}/', timeout=2).read()\""]
       interval: 5s
       timeout: 3s
       retries: 20
       start_period: 10s
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-  mysql:
-    image: mysql:8.4
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=blurmoji
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-
-  azurite:
-    image: mcr.microsoft.com/azure-storage/azurite
-    command: azurite --blobHost 0.0.0.0 --blobPort 10000
-    ports:
-      - "10000:10000"
-    volumes:
-      - azurite-data:/data
-
-  smoke-test-queue-delay:
-    build:
-      context: .
-      dockerfile: src/deploy/docker/Dockerfile.tests
-    command: ["python", "-m", "src.tests.smoke.run_suite", "--scenario", "queue_delay"]
-    environment:
-      - SMOKE_GATEWAY_BASE_URL=http://gateway-api:8000
-      - SMOKE_PUBLIC_BASE_URL=http://gateway-api:8000
-      - SMOKE_FRONTEND_BASE_URL=http://frontend:8001
-      - SMOKE_GAME_SERVICE_BASE_URL=http://game-service:8010
-      - SMOKE_CATALOG_SERVICE_BASE_URL=http://emoji-catalog-service:8020
-      - SMOKE_RENDER_SERVICE_BASE_URL=http://render-service:8030
-      - SMOKE_REDIS_HOST=redis
-      - SMOKE_MYSQL_HOST=mysql
-      - SMOKE_AZURITE_HOST=azurite
-    depends_on:
-      gateway-api:
-        condition: service_healthy
-      game-service:
-        condition: service_healthy
-      emoji-catalog-service:
-        condition: service_healthy
-      render-service:
-        condition: service_healthy
-
-  smoke-test-concurrent-sessions:
-    build:
-      context: .
-      dockerfile: src/deploy/docker/Dockerfile.tests
-    command: ["python", "-m", "src.tests.smoke.run_suite", "--scenario", "concurrent_sessions"]
-    environment:
-      - SMOKE_GATEWAY_BASE_URL=http://gateway-api:8000
-      - SMOKE_PUBLIC_BASE_URL=http://gateway-api:8000
-      - SMOKE_FRONTEND_BASE_URL=http://frontend:8001
-      - SMOKE_GAME_SERVICE_BASE_URL=http://game-service:8010
-      - SMOKE_CATALOG_SERVICE_BASE_URL=http://emoji-catalog-service:8020
-      - SMOKE_RENDER_SERVICE_BASE_URL=http://render-service:8030
-      - SMOKE_REDIS_HOST=redis
-      - SMOKE_MYSQL_HOST=mysql
-      - SMOKE_AZURITE_HOST=azurite
-      - SMOKE_CONCURRENT_SESSION_COUNT=100
-    depends_on:
-      gateway-api:
-        condition: service_healthy
-      game-service:
-        condition: service_healthy
-      emoji-catalog-service:
-        condition: service_healthy
-      render-service:
-        condition: service_healthy
-
-  smoke-test-gateway-restrictions:
-    build:
-      context: .
-      dockerfile: src/deploy/docker/Dockerfile.tests
-    command: ["python", "-m", "src.tests.smoke.run_suite", "--scenario", "gateway_restrictions"]
-    environment:
-      - SMOKE_GATEWAY_BASE_URL=http://gateway-api:8000
-      - SMOKE_PUBLIC_BASE_URL=http://gateway-api:8000
-      - SMOKE_FRONTEND_BASE_URL=http://frontend:8001
-      - SMOKE_GAME_SERVICE_BASE_URL=http://game-service:8010
-      - SMOKE_CATALOG_SERVICE_BASE_URL=http://emoji-catalog-service:8020
-      - SMOKE_RENDER_SERVICE_BASE_URL=http://render-service:8030
-      - SMOKE_REDIS_HOST=redis
-      - SMOKE_MYSQL_HOST=mysql
-      - SMOKE_AZURITE_HOST=azurite
-    depends_on:
-      gateway-api:
-        condition: service_healthy
-      frontend:
-        condition: service_healthy
-      game-service:
-        condition: service_healthy
-      emoji-catalog-service:
-        condition: service_healthy
-      render-service:
-        condition: service_healthy
-
-  smoke-test-stress:
-    build:
-      context: .
-      dockerfile: src/deploy/docker/Dockerfile.tests
-    command: ["python", "-m", "src.tests.smoke.run_suite", "--scenario", "stress"]
-    environment:
-      - SMOKE_GATEWAY_BASE_URL=http://gateway-api:8000
-      - SMOKE_PUBLIC_BASE_URL=http://gateway-api:8000
-      - SMOKE_FRONTEND_BASE_URL=http://frontend:8001
-      - SMOKE_GAME_SERVICE_BASE_URL=http://game-service:8010
-      - SMOKE_CATALOG_SERVICE_BASE_URL=http://emoji-catalog-service:8020
-      - SMOKE_RENDER_SERVICE_BASE_URL=http://render-service:8030
-      - SMOKE_REDIS_HOST=redis
-      - SMOKE_MYSQL_HOST=mysql
-      - SMOKE_AZURITE_HOST=azurite
-    depends_on:
-      gateway-api:
-        condition: service_healthy
-      game-service:
-        condition: service_healthy
-      emoji-catalog-service:
-        condition: service_healthy
-      render-service:
-        condition: service_healthy
-
-  smoke-test-connectivity:
-    build:
-      context: .
-      dockerfile: src/deploy/docker/Dockerfile.tests
-    command: ["python", "-m", "src.tests.smoke.run_suite", "--scenario", "connectivity"]
-    environment:
-      - SMOKE_GATEWAY_BASE_URL=http://gateway-api:8000
-      - SMOKE_PUBLIC_BASE_URL=http://gateway-api:8000
-      - SMOKE_FRONTEND_BASE_URL=http://frontend:8001
-      - SMOKE_GAME_SERVICE_BASE_URL=http://game-service:8010
-      - SMOKE_CATALOG_SERVICE_BASE_URL=http://emoji-catalog-service:8020
-      - SMOKE_RENDER_SERVICE_BASE_URL=http://render-service:8030
-      - SMOKE_REDIS_HOST=redis
-      - SMOKE_MYSQL_HOST=mysql
-      - SMOKE_AZURITE_HOST=azurite
-    depends_on:
-      gateway-api:
-        condition: service_healthy
-      game-service:
-        condition: service_healthy
-      emoji-catalog-service:
-        condition: service_healthy
-      render-service:
-        condition: service_healthy
-      redis:
-        condition: service_started
-      mysql:
-        condition: service_started
-      azurite:
-        condition: service_started
-
-volumes:
-  mysql-data:
-  azurite-data:

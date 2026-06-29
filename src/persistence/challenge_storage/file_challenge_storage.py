@@ -11,16 +11,17 @@ class FileChallengeStorage(AbstractChallengeStorage):
     def __init__(self, file_path: Path):
         self.file_path = file_path
         if not self.file_path.exists():
+            self.file_path.parent.mkdir(parents=True, exist_ok=True)
             self.file_path.write_text("{}", encoding="utf-8")
         self._lock = threading.Lock()
         self._data_cache = self._load_all()
 
     def _load_all(self) -> dict[str, str]:
-        with open(self.file_path, 'r', encoding="utf-8") as f:
+        with self.file_path.open(mode='r', encoding="utf-8") as f:
             return json.load(f)
 
     def _save_all(self, data: dict[str, str]):
-        with open(self.file_path, 'w', encoding="utf-8") as f:
+        with self.file_path.open(mode='w', encoding="utf-8") as f:
             json.dump(data, f, indent=4)
 
     def save_state(self, session_id: str, state: ChallengeState) -> None:

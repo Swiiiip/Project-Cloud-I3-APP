@@ -2,15 +2,15 @@ import io
 
 from fastapi import FastAPI, Query, Response
 
-from src.config import Config
 from src.core.gameplay.image_blur_processor import ImageBlurProcessingService
 from src.services.render.game_service_client import GameServiceClient
+from src.utils.runtime_env import RuntimeEnv
 
 
 class RenderServiceApp:
     def __init__(self, game_client: GameServiceClient):
         self._game_client = game_client
-        self._image_service = ImageBlurProcessingService(blur_levels=Config.DAILY_CHALLENGE_MAX_GUESSES)
+        self._image_service = ImageBlurProcessingService(blur_levels=RuntimeEnv.require_int("DAILY_CHALLENGE_MAX_GUESSES"))
         self._app = FastAPI(title="Blurmoji Render Service")
         self._register_routes()
 
